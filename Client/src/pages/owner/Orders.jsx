@@ -17,7 +17,10 @@ export default function Orders() {
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:4000');
+    // Robustly strip '/api' suffix from API URL for the WebSocket connection
+    const rawApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+    const socketUrl = rawApiUrl.replace(/\/api$/, '');
+    const socket = io(socketUrl);
     
     if (user?.id) {
       socket.emit('join_owner_room', user.id);
