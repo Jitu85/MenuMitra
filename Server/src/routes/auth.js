@@ -300,7 +300,8 @@ router.post('/forgot-password', async (req, res, next) => {
       }
     });
 
-    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+    const frontendBaseUrl = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? 'https://menu-mitra.vercel.app' : 'http://localhost:3000');
+    const resetLink = `${frontendBaseUrl}/reset-password?token=${resetToken}`;
 
     const mailOptions = {
       from: `"MenuMitra Support" <${process.env.EMAIL_FROM}>`,

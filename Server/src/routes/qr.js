@@ -17,7 +17,8 @@ router.get('/generate/:slug', async (req, res, next) => {
       return res.status(404).json({ message: 'Merchant slug not found.' });
     }
 
-    const menuUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/menu/${slug}`;
+    const frontendBaseUrl = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? 'https://menu-mitra.vercel.app' : 'http://localhost:3000');
+    const menuUrl = `${frontendBaseUrl}/menu/${slug}`;
 
     // Generate branded QR Code
     const qrDataUrl = await QRCode.toDataURL(menuUrl, {

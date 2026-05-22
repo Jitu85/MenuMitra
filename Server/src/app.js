@@ -18,13 +18,36 @@ const server = http.createServer(app);
 const prisma = new PrismaClient();
 app.set('prisma', prisma);
 
-// Initialize Socket.io
+// Setup CORS Options dynamically to support multiple origins (Localhost, Vercel deployments, custom domains)
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://menu-mitra.vercel.app'
+];
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
+const dynamicCorsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = allowedOrigins.includes(origin) || 
+                      origin.endsWith('.vercel.app') || 
+                      /^http:\/\/localhost:\d+$/.test(origin);
+                      
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+};
+
+// Initialize Socket.io with dynamic CORS options
 const io = socketIo(server, {
-  cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true
-  }
+  cors: dynamicCorsOptions
 });
 app.set('io', io);
 
@@ -56,10 +79,7 @@ const apiLimiter = rateLimit({
 app.use(helmet({
   contentSecurityPolicy: false // Allow inline scripts for simpler frontend integration
 }));
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
-}));
+app.use(cors(dynamicCorsOptions));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
