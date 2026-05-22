@@ -284,10 +284,10 @@ export default function Landing() {
         <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.35)" }}>
           © 2026 MenuMitra · All Rights Reserved
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(232, 101, 10, 0.05)", border: "1px solid rgba(232, 101, 10, 0.15)", padding: "6px 16px", borderRadius: "50px" }}>
           <span style={{ color: "#E8650A" }}>✦</span>
-          <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)" }}>Developed by</span>
-          <span style={{ fontSize: "13px", fontFamily: "'Playfair Display', serif", fontWeight: 900, color: "rgba(255, 255, 255, 0.7)" }}>Abhijit Kumar Misra</span>
+          <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.55)", fontWeight: 500 }}>Designed & Developed by</span>
+          <span style={{ fontSize: "13px", fontFamily: "'Playfair Display', serif", fontWeight: 900, color: "#E8650A" }}>Abhijit Kumar Misra</span>
         </div>
       </footer>
     </div>
