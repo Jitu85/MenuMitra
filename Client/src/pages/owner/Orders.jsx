@@ -69,7 +69,7 @@ export default function Orders() {
           <div style={{ display: "flex", gap: 6 }}>
             {["all", "pending", "paid"].map(f => (
               <button key={f} onClick={() => setFilter(f)}
-                style={{ padding: "8px 16px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, textTransform: "capitalize", background: filter === f ? "#E8650A" : "white", color: filter === f ? "white" : "#666", border: filter === f ? "none" : "1px solid #f0e8df" }}>
+                style={{ padding: "8px 16px", borderRadius: 20, cursor: "pointer", fontSize: 12, fontWeight: 700, textTransform: "capitalize", background: filter === f ? "#E8650A" : "white", color: filter === f ? "white" : "#666", border: filter === f ? "none" : "1px solid #f0e8df" }}>
                 {f}
               </button>
             ))}

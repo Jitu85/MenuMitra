@@ -1,7 +1,7 @@
 import React from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
 
@@ -10,25 +10,11 @@ const SIGNUP_TREND = [
   { month: "Mar", signups: 24 }, { month: "Apr", signups: 19 }, { month: "May", signups: 31 },
 ];
 
-const REVENUE_TREND = [
-  { month: "Dec", revenue: 300 }, { month: "Jan", revenue: 1200 }, { month: "Feb", revenue: 1800 },
-  { month: "Mar", revenue: 2400 }, { month: "Apr", revenue: 1900 }, { month: "May", revenue: 3100 },
-];
-
 const SUB_STATUS = [
   { name: "Active", value: 5, color: "#2D6A4F" },
   { name: "Trial", value: 1, color: "#E8650A" },
   { name: "Expired", value: 1, color: "#C9920A" },
   { name: "Suspended", value: 1, color: "#c0392b" },
-];
-
-const BIZ_TYPE_DATA = [
-  { type: "Restaurant", count: 2, color: "#E8650A" },
-  { type: "Dhaba", count: 2, color: "#C9920A" },
-  { type: "Hotel", count: 1, color: "#2D6A4F" },
-  { type: "Café", count: 1, color: "#5B8DB8" },
-  { type: "Tea Stall", count: 1, color: "#8B5CF6" },
-  { type: "Bakery", count: 1, color: "#EC4899" },
 ];
 
 const MOCK_AUDIT_LOGS = [

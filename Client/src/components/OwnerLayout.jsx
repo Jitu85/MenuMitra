@@ -9,7 +9,6 @@ export default function OwnerLayout({ children, pageTitle }) {
 
   // Fallback info if user is not fully loaded
   const businessName = user?.businessName || "Sharma's Dhaba";
-  const ownerName = user?.ownerName || "Ramesh Sharma";
   const city = user?.city || "Patna";
   const state = user?.state || "Bihar";
   const slug = user?.slug || "sharmas-dhaba-patna";

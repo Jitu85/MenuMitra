@@ -40,7 +40,7 @@ export default function Analytics() {
           <div style={{ display: "flex", gap: 8 }}>
             {["weekly", "monthly"].map(r => (
               <button key={r} onClick={() => setAnalyticsRange(r)}
-                style={{ padding: "8px 16px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "'DM Sans',sans-serif", background: analyticsRange === r ? "#E8650A" : "white", color: analyticsRange === r ? "white" : "#888", border: analyticsRange === r ? "none" : "1px solid #f0e8df" }}>
+                style={{ padding: "8px 16px", borderRadius: 20, cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "'DM Sans',sans-serif", background: analyticsRange === r ? "#E8650A" : "white", color: analyticsRange === r ? "white" : "#888", border: analyticsRange === r ? "none" : "1px solid #f0e8df" }}>
                 {r.charAt(0).toUpperCase() + r.slice(1)}
               </button>
             ))}

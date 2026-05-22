@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import api from "../services/api";
 import toast, { Toaster } from "react-hot-toast";
@@ -140,11 +140,11 @@ export default function CustomerMenu() {
   const [cart, setCart] = useState({});
   const [tableNumber, setTableNumber] = useState("");
   const [customerName, setCustomerName] = useState("");
-  const [specialNotes, setSpecialNotes] = useState("");
+  const [specialNotes, setSpecialNotes] = useState(""); // eslint-disable-line no-unused-vars
   
   // Checkout flow states
   const [checkoutStep, setCheckoutStep] = useState("menu"); // menu | cart | pay | success
-  const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState(""); // eslint-disable-line no-unused-vars
   const [completedOrder, setCompletedOrder] = useState(null);
   const [placingOrder, setPlacingOrder] = useState(false);
 

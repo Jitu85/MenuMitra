@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import OwnerLayout from '../../components/OwnerLayout';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -40,7 +40,6 @@ export default function MenuManagement() {
   const [itemModal, setItemModal] = useState(null);
   const [catModal, setCatModal] = useState(null);
 
-  const fileInputRef = useRef();
 
   const BLANK_ITEM = { id: null, categoryId: "CAT1", nameEn: "", nameHi: "", descEn: "", descHi: "", price: "", isVeg: true, isAvailable: true, photo: "🍛" };
 
