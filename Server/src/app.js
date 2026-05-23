@@ -1,15 +1,16 @@
+// Load environment variables dynamically based on file location before any other imports
+const path = require('path');
+const dotenv = require('dotenv');
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const dotenv = require('dotenv');
 const { rateLimit } = require('express-rate-limit');
 const { PrismaClient } = require('@prisma/client');
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
