@@ -195,10 +195,43 @@ export default function Signup() {
           background: #2D6A4F;
           color: white;
         }
+
+        /* Mobile Responsive adjustments */
+        @media (max-width: 560px) {
+          .signup-header {
+            padding: 12px 16px !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            text-align: center !important;
+          }
+          .signup-body {
+            padding: 20px 12px !important;
+          }
+          .signup-card {
+            padding: 24px 16px !important;
+            border-radius: 16px !important;
+          }
+          .responsive-grid, .responsive-grid-3 {
+            grid-template-columns: 1fr !important;
+          }
+          .signup-stepper {
+            gap: 4px !important;
+            margin-bottom: 24px !important;
+          }
+          .signup-stepper-label {
+            font-size: 8px !important;
+          }
+          .signup-footer {
+            padding: 16px !important;
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 8px !important;
+          }
+        }
       `}</style>
 
       {/* Top Header Bar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 40px", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
+      <div className="signup-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 40px", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
         <Link to="/" style={{ textDecoration: "none", color: "white", display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: "24px" }}>🍽️</span>
           <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: "20px" }}>MenuMitra</span>
@@ -206,14 +239,14 @@ export default function Signup() {
         <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.45)" }}>Already registered? <Link to="/login" style={{ color: "#E8650A", fontWeight: 700, textDecoration: "none" }}>Log In</Link></span>
       </div>
 
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px" }}>
-        <div style={{ background: "#1A1A1A", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "24px", maxWidth: "600px", width: "100%", padding: "40px", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}>
+      <div className="signup-body" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px" }}>
+        <div className="signup-card" style={{ background: "#1A1A1A", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "24px", maxWidth: "600px", width: "100%", padding: "40px", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}>
           
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "32px", fontWeight: 900, textAlign: "center", marginBottom: "8px" }}>Owner Sign Up</h2>
           <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", textAlign: "center", marginBottom: "32px" }}>Digitalize your dining menu & accept direct table orders. 30-day free trial.</p>
 
           {/* Stepper progress */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", marginBottom: "40px" }}>
+          <div className="signup-stepper" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", marginBottom: "40px" }}>
             <div style={{ height: "2px", background: "rgba(255,255,255,0.08)", position: "absolute", left: "20px", right: "20px", top: "16px", zIndex: 1 }} />
             {stepsLabel.map((label, idx) => {
               const currentNum = idx + 1;
@@ -224,7 +257,7 @@ export default function Signup() {
                   <div className={`step-pill ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}>
                     {isDone ? "✓" : currentNum}
                   </div>
-                  <span style={{ fontSize: "10px", fontWeight: 700, color: isActive ? "#E8650A" : isDone ? "#2D6A4F" : "rgba(255,255,255,0.3)", marginTop: "8px", textAlign: "center" }}>{label}</span>
+                  <span className="signup-stepper-label" style={{ fontSize: "10px", fontWeight: 700, color: isActive ? "#E8650A" : isDone ? "#2D6A4F" : "rgba(255,255,255,0.3)", marginTop: "8px", textAlign: "center" }}>{label}</span>
                 </div>
               );
             })}
@@ -256,7 +289,7 @@ export default function Signup() {
                   <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Owner's Full Name *</label>
                   <input type="text" name="ownerName" value={formData.ownerName} onChange={handleChange} placeholder="e.g. Ramesh Kumar" required />
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div className="responsive-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Email Address *</label>
                     <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="owner@gmail.com" required />
@@ -270,7 +303,7 @@ export default function Signup() {
                   <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Outlet Address *</label>
                   <textarea name="address" value={formData.address} onChange={handleChange} rows={2} placeholder="Full physical location details..." required style={{ resize: "none" }} />
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 0.8fr", gap: "10px" }}>
+                <div className="responsive-grid-3" style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 0.8fr", gap: "10px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>City *</label>
                     <input type="text" name="city" value={formData.city} onChange={handleChange} placeholder="Patna" required />
@@ -357,7 +390,7 @@ export default function Signup() {
       </div>
 
       {/* Developer credit footer */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "20px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>
+      <div className="signup-footer" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "20px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>
         <span>© 2026 MenuMitra · All Rights Reserved</span>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span>Developed by</span>

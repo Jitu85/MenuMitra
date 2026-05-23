@@ -98,10 +98,33 @@ export default function OwnerLogin() {
           background: rgba(232, 101, 10, 0.05);
           color: #E8650A;
         }
+
+        /* Mobile responsive overrides */
+        @media (max-width: 560px) {
+          .auth-header {
+            padding: 12px 16px !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            text-align: center !important;
+          }
+          .auth-body {
+            padding: 20px 12px !important;
+          }
+          .auth-card {
+            padding: 24px 16px !important;
+            border-radius: 16px !important;
+          }
+          .auth-footer {
+            padding: 16px !important;
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 8px !important;
+          }
+        }
       `}</style>
 
       {/* Top Header Bar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 40px", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
+      <div className="auth-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 40px", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
         <Link to="/" style={{ textDecoration: "none", color: "white", display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: "24px" }}>🍽️</span>
           <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: "20px" }}>MenuMitra</span>
@@ -109,8 +132,8 @@ export default function OwnerLogin() {
         <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.45)" }}>New to MenuMitra? <Link to="/signup" style={{ color: "#E8650A", fontWeight: 700, textDecoration: "none" }}>Sign Up</Link></span>
       </div>
 
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px" }}>
-        <div style={{ background: "#1A1A1A", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "24px", maxWidth: "420px", width: "100%", padding: "40px", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}>
+      <div className="auth-body" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px" }}>
+        <div className="auth-card" style={{ background: "#1A1A1A", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "24px", maxWidth: "420px", width: "100%", padding: "40px", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}>
           
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "32px", fontWeight: 900, textAlign: "center", marginBottom: "8px" }}>Owner Login</h2>
           <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", textAlign: "center", marginBottom: "32px" }}>Access your restaurant dashboard, orders feed, and digital menu controls.</p>
@@ -145,7 +168,7 @@ export default function OwnerLogin() {
       </div>
 
       {/* Developer credit footer */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "20px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>
+      <div className="auth-footer" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "20px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>
         <span>© 2026 MenuMitra · All Rights Reserved</span>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span>Developed by</span>

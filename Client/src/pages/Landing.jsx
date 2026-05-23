@@ -104,19 +104,86 @@ export default function Landing() {
           border-color: rgba(232, 101, 10, 0.3);
           box-shadow: 0 12px 30px rgba(0,0,0,0.4);
         }
+
+        /* Mobile Layout Optimizations */
+        @media (max-width: 768px) {
+          .nav-container {
+            padding: 12px 16px !important;
+            flex-direction: column !important;
+            gap: 12px !important;
+            position: relative !important;
+          }
+          
+          .nav-logo-text {
+            font-size: 20px !important;
+          }
+          
+          .nav-actions {
+            width: 100% !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            flex-wrap: wrap !important;
+          }
+          
+          .nav-actions a, .nav-actions button {
+            padding: 6px 12px !important;
+            font-size: 11px !important;
+          }
+
+          .hero-container {
+            padding: 40px 16px !important;
+            grid-template-columns: 1fr !important;
+            gap: 32px !important;
+            text-align: center !important;
+          }
+          
+          .hero-title {
+            font-size: 32px !important;
+            line-height: 1.2 !important;
+          }
+          
+          .hero-buttons {
+            justify-content: center !important;
+          }
+
+          /* Float items can cause layout breaks on small screens; hide them */
+          .graphic-floater-1, .graphic-floater-2 {
+            display: none !important;
+          }
+          
+          .graphic-wrapper {
+            margin-top: 20px !important;
+          }
+
+          .graphic-phone {
+            width: 280px !important;
+            height: 500px !important;
+          }
+
+          .section-padding {
+            padding: 40px 16px !important;
+          }
+          
+          .footer-container {
+            padding: 20px !important;
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 16px !important;
+          }
+        }
       `}</style>
 
       {/* Navigation */}
-      <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 40px", borderBottom: "1px solid rgba(255, 255, 255, 0.08)", background: "rgba(15, 15, 15, 0.8)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 100 }}>
+      <nav className="nav-container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 40px", borderBottom: "1px solid rgba(255, 255, 255, 0.08)", background: "rgba(15, 15, 15, 0.8)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: "28px" }}>🍽️</span>
           <div>
-            <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "24px", color: "white" }}>MenuMitra</span>
+            <span className="nav-logo-text" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "24px", color: "white" }}>MenuMitra</span>
             <div style={{ fontSize: "8px", color: "#E8650A", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Scan · Order · Pay</div>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div className="nav-actions" style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <button onClick={() => setLang(lang === 'en' ? 'hi' : 'en')} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "white", padding: "6px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
             🌐 {lang === 'en' ? 'हिंदी' : 'English'}
           </button>
@@ -130,16 +197,16 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <header style={{ padding: "80px 40px", maxWidth: "1200px", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", alignItems: "center" }}>
+      <header className="hero-container" style={{ padding: "80px 40px", maxWidth: "1200px", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", alignItems: "center" }}>
         <div>
           <span style={{ color: "#E8650A", fontWeight: 800, letterSpacing: 1.5, fontSize: "13px", textTransform: "uppercase" }}>✦ {t.welcomeSub}</span>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "52px", fontWeight: 900, lineHeight: 1.1, margin: "16px 0 24px", background: "linear-gradient(to right, #ffffff, #f0e8df)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          <h1 className="hero-title" style={{ fontFamily: "'Playfair Display', serif", fontSize: "52px", fontWeight: 900, lineHeight: 1.1, margin: "16px 0 24px", background: "linear-gradient(to right, #ffffff, #f0e8df)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
             {t.welcome}
           </h1>
           <p style={{ fontSize: "16px", color: "rgba(255, 255, 255, 0.65)", lineHeight: 1.7, marginBottom: "36px" }}>
             {t.heroDesc}
           </p>
-          <div style={{ display: "flex", gap: 16 }}>
+          <div className="hero-buttons" style={{ display: "flex", gap: 16 }}>
             <Link to="/signup" className="glow-btn" style={{ padding: "14px 28px", borderRadius: "50px", textDecoration: "none", color: "white", fontSize: "15px", fontWeight: 800 }}>
               {t.ctaSignUp}
             </Link>
@@ -150,8 +217,8 @@ export default function Landing() {
         </div>
 
         {/* Dynamic Graphic Mockup */}
-        <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center" }}>
-          <div style={{ width: "320px", height: "580px", borderRadius: "40px", border: "12px solid #2A2A2E", background: "#1C1C1E", boxShadow: "0 25px 60px rgba(0,0,0,0.8), 0 0 80px rgba(232, 101, 10, 0.15)", overflow: "hidden", position: "relative" }}>
+        <div className="graphic-wrapper" style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <div className="graphic-phone" style={{ width: "320px", height: "580px", borderRadius: "40px", border: "12px solid #2A2A2E", background: "#1C1C1E", boxShadow: "0 25px 60px rgba(0,0,0,0.8), 0 0 80px rgba(232, 101, 10, 0.15)", overflow: "hidden", position: "relative" }}>
             {/* Phone notch */}
             <div style={{ width: "140px", height: "24px", background: "#2A2A2E", borderRadius: "0 0 15px 15px", position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", zIndex: 10 }}></div>
             {/* Phone screen preview */}
@@ -181,17 +248,17 @@ export default function Landing() {
           </div>
 
           {/* Floaters */}
-          <div style={{ position: "absolute", top: "10%", right: "-20px", background: "rgba(45, 106, 79, 0.9)", border: "1px solid rgba(45, 106, 79, 0.4)", borderRadius: "12px", padding: "10px 14px", fontSize: "12px", fontWeight: 700, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 10px 25px rgba(0,0,0,0.3)" }}>
+          <div className="graphic-floater-1" style={{ position: "absolute", top: "10%", right: "-20px", background: "rgba(45, 106, 79, 0.9)", border: "1px solid rgba(45, 106, 79, 0.4)", borderRadius: "12px", padding: "10px 14px", fontSize: "12px", fontWeight: 700, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 10px 25px rgba(0,0,0,0.3)" }}>
             🟢 Live Order Alert
           </div>
-          <div style={{ position: "absolute", bottom: "15%", left: "-40px", background: "rgba(232, 101, 10, 0.9)", border: "1px solid rgba(232, 101, 10, 0.4)", borderRadius: "12px", padding: "10px 14px", fontSize: "12px", fontWeight: 700, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 10px 25px rgba(0,0,0,0.3)" }}>
+          <div className="graphic-floater-2" style={{ position: "absolute", bottom: "15%", left: "-40px", background: "rgba(232, 101, 10, 0.9)", border: "1px solid rgba(232, 101, 10, 0.4)", borderRadius: "12px", padding: "10px 14px", fontSize: "12px", fontWeight: 700, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 10px 25px rgba(0,0,0,0.3)" }}>
             ⚡ Instant UPI Payment
           </div>
         </div>
       </header>
 
       {/* How it works */}
-      <section style={{ padding: "80px 40px", background: "#080808", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <section className="section-padding" style={{ padding: "80px 40px", background: "#080808", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "36px", fontWeight: 900, textAlign: "center", marginBottom: "48px" }}>
             {t.howItWorks}
@@ -213,7 +280,7 @@ export default function Landing() {
       </section>
 
       {/* Features */}
-      <section style={{ padding: "80px 40px", maxWidth: "1200px", margin: "0 auto" }}>
+      <section className="section-padding" style={{ padding: "80px 40px", maxWidth: "1200px", margin: "0 auto" }}>
         <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "36px", fontWeight: 900, textAlign: "center", marginBottom: "48px" }}>
           {t.featuresTitle}
         </h2>
@@ -234,7 +301,7 @@ export default function Landing() {
       </section>
 
       {/* Subscription Plans */}
-      <section style={{ padding: "80px 40px", background: "#080808", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <section className="section-padding" style={{ padding: "80px 40px", background: "#080808", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "36px", fontWeight: 900, textAlign: "center", marginBottom: "48px" }}>
             {t.pricingTitle}
@@ -276,7 +343,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer style={{ padding: "40px", borderTop: "1px solid rgba(255, 255, 255, 0.08)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, maxWidth: "1200px", margin: "0 auto" }}>
+      <footer className="footer-container" style={{ padding: "40px", borderTop: "1px solid rgba(255, 255, 255, 0.08)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, maxWidth: "1200px", margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: "22px" }}>🍽️</span>
           <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: "18px" }}>MenuMitra</span>

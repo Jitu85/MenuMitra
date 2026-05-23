@@ -1,5 +1,7 @@
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import { useAuthStore } from './store/authStore';
 
 // ── Public pages ──────────────────────────────────────
 import Landing       from './pages/Landing';
@@ -37,6 +39,12 @@ function AdminRoute({ children }) {
 }
 
 export default function App() {
+  const initAuth = useAuthStore(state => state.initAuth);
+
+  useEffect(() => {
+    initAuth();
+  }, [initAuth]);
+
   return (
     <BrowserRouter>
       <Routes>

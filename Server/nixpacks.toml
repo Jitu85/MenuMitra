@@ -1,28 +1,8 @@
 # nixpacks.toml for Railway deployment
-# Configures system packages to support headless Chromium and Puppeteer
+# Configures system packages to support Node.js execution cleanly without unused chromium/puppeteer dependencies
 
 [phases.setup]
 nixPkgs = [
-  "nodejs",
-  "chromium",
-  "glib",
-  "nss",
-  "nspr",
-  "atk",
-  "cups",
-  "libdrm",
-  "libxkbcommon",
-  "at-spi2-core",
-  "libxcomposite",
-  "libxdamage",
-  "libxrandr",
-  "libgbm",
-  "pango",
-  "cairo",
-  "alsa-lib",
-  "dbus"
+  "nodejs"
 ]
 
-[variables]
-PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
-PUPPETEER_EXECUTABLE_PATH = "chromium"

@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 
 export default function OwnerLayout({ children, pageTitle }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -33,7 +34,7 @@ export default function OwnerLayout({ children, pageTitle }) {
   ];
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F5EFE8", fontFamily: "'DM Sans',sans-serif", color: "#1A1A1A" }}>
+    <div className="owner-layout-wrapper" style={{ display: "flex", minHeight: "100vh", background: "#F5EFE8", fontFamily: "'DM Sans',sans-serif", color: "#1A1A1A" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,600&family=DM+Sans:wght@300;400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -99,10 +100,76 @@ export default function OwnerLayout({ children, pageTitle }) {
           background: #E8650A;
           color: white;
         }
+
+        /* Responsive Mobile Drawer Styles */
+        .sidebar-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.4);
+          backdrop-filter: blur(3px);
+          z-index: 999;
+          animation: fadeIn 0.25s ease-out;
+        }
+        
+        .hamburger-btn {
+          display: none;
+          background: none;
+          border: none;
+          font-size: 22px;
+          color: #E8650A;
+          cursor: pointer;
+          padding: 4px;
+          margin-right: 8px;
+          line-height: 1;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+          .hamburger-btn {
+            display: block !important;
+          }
+          
+          .owner-sidebar {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            width: 250px !important;
+            z-index: 1000 !important;
+            transform: translateX(-100%) !important;
+            box-shadow: 20px 0 50px rgba(0,0,0,0.15) !important;
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1) !important;
+          }
+          
+          .owner-sidebar.mobile-open {
+            transform: translateX(0) !important;
+          }
+
+          .topbar-container {
+            padding: 12px 16px !important;
+          }
+
+          .main-content-body {
+            padding: 16px !important;
+          }
+          
+          .owner-sidebar .collapsed-hide {
+            display: block !important;
+          }
+        }
       `}</style>
 
+      {/* Mobile Backdrop overlay */}
+      {mobileSidebarOpen && (
+        <div className="sidebar-backdrop" onClick={() => setMobileSidebarOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside style={{
+      <aside className={`owner-sidebar ${mobileSidebarOpen ? "mobile-open" : ""}`} style={{
         width: sidebarOpen ? 230 : 68, flexShrink: 0,
         background: "white", borderRight: "1px solid rgba(232, 101, 10, 0.1)",
         display: "flex", flexDirection: "column",
@@ -112,7 +179,7 @@ export default function OwnerLayout({ children, pageTitle }) {
         {/* Logo */}
         <div style={{ padding: "20px 16px 14px", borderBottom: "1px solid #f0e8df", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #E8650A, #C9920A)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>🍽️</div>
-          {sidebarOpen && (
+          {(sidebarOpen || mobileSidebarOpen) && (
             <div>
               <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 16, color: "#1A1A1A", whiteSpace: "nowrap" }}>MenuMitra</div>
               <div style={{ fontSize: 8, color: "#E8650A", fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Owner Portal</div>
@@ -121,7 +188,7 @@ export default function OwnerLayout({ children, pageTitle }) {
         </div>
 
         {/* Business Info Banner */}
-        {sidebarOpen && (
+        {(sidebarOpen || mobileSidebarOpen) && (
           <div style={{ margin: "10px 12px", background: "linear-gradient(135deg, rgba(232, 101, 10, 0.08), rgba(201, 146, 10, 0.06))", border: "1px solid rgba(232, 101, 10, 0.15)", borderRadius: 12, padding: "10px 12px" }}>
             <div style={{ fontSize: 12, fontWeight: 800, color: "#1A1A1A", marginBottom: 1 }}>{businessName}</div>
             <div style={{ fontSize: 10, color: "#E8650A", fontWeight: 600, marginBottom: 4 }}>{city}, {state}</div>
@@ -135,9 +202,9 @@ export default function OwnerLayout({ children, pageTitle }) {
         {/* Nav Links */}
         <nav style={{ flex: 1, padding: "8px 10px", overflowY: "auto" }}>
           {navItems.map(item => (
-            <NavLink key={item.to} to={item.to} className="nav-link-item" end={item.to === "/dashboard"}>
+            <NavLink key={item.to} to={item.to} className="nav-link-item" end={item.to === "/dashboard"} onClick={() => setMobileSidebarOpen(false)}>
               <span style={{ fontSize: 16, flexShrink: 0 }}>{item.icon}</span>
-              {sidebarOpen && <span style={{ whiteSpace: "nowrap" }}>{item.label}</span>}
+              {(sidebarOpen || mobileSidebarOpen) && <span style={{ whiteSpace: "nowrap" }}>{item.label}</span>}
             </NavLink>
           ))}
         </nav>
@@ -146,11 +213,11 @@ export default function OwnerLayout({ children, pageTitle }) {
         <div style={{ padding: "10px", borderTop: "1px solid #f0e8df" }}>
           <div className="nav-link-item" onClick={() => setSidebarOpen(v => !v)} style={{ margin: 0 }}>
             <span style={{ fontSize: 13, flexShrink: 0 }}>{sidebarOpen ? "◀" : "▶"}</span>
-            {sidebarOpen && <span style={{ fontSize: 11, color: "#bbb" }}>Collapse</span>}
+            {(sidebarOpen || mobileSidebarOpen) && <span style={{ fontSize: 11, color: "#bbb" }}>Collapse</span>}
           </div>
-          <div className="nav-link-item" onClick={handleLogout} style={{ margin: "4px 0 0", color: "#c0392b" }}>
+          <div className="nav-link-item" onClick={() => { setMobileSidebarOpen(false); handleLogout(); }} style={{ margin: "4px 0 0", color: "#c0392b" }}>
             <span style={{ fontSize: 13, flexShrink: 0 }}>🚪</span>
-            {sidebarOpen && <span style={{ fontSize: 11, fontWeight: "bold" }}>Sign Out</span>}
+            {(sidebarOpen || mobileSidebarOpen) && <span style={{ fontSize: 11, fontWeight: "bold" }}>Sign Out</span>}
           </div>
         </div>
       </aside>
@@ -158,12 +225,15 @@ export default function OwnerLayout({ children, pageTitle }) {
       {/* Main Content Area */}
       <main style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minWidth: 0 }}>
         {/* Topbar */}
-        <div style={{ background: "white", borderBottom: "1px solid #f0e8df", padding: "14px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 12px rgba(0, 0, 0, 0.04)" }}>
-          <div>
-            <div style={{ fontSize: 11, color: "#bbb", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600, marginBottom: 1 }}>
-              {pageTitle}
+        <div className="topbar-container" style={{ background: "white", borderBottom: "1px solid #f0e8df", padding: "14px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 12px rgba(0, 0, 0, 0.04)" }}>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <button className="hamburger-btn" onClick={() => setMobileSidebarOpen(true)}>☰</button>
+            <div>
+              <div style={{ fontSize: 11, color: "#bbb", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600, marginBottom: 1 }}>
+                {pageTitle}
+              </div>
+              <div style={{ fontSize: 12, color: "#ccc" }}>{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}</div>
             </div>
-            <div style={{ fontSize: 12, color: "#ccc" }}>{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}</div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ background: "rgba(45, 106, 79, 0.08)", border: "1px solid rgba(45, 106, 79, 0.2)", borderRadius: 20, padding: "5px 12px", display: "flex", gap: 6, alignItems: "center" }}>
@@ -171,14 +241,15 @@ export default function OwnerLayout({ children, pageTitle }) {
               <span style={{ fontSize: 11, color: "#2D6A4F", fontWeight: 700 }}>Active · {daysLeft} days</span>
             </div>
             <Link to={`/menu/${slug}`} target="_blank" rel="noreferrer"
-              style={{ fontSize: 12, color: "#E8650A", fontWeight: 700, textDecoration: "none", background: "rgba(232, 101, 10, 0.08)", borderRadius: 20, padding: "5px 12px" }}>
+              style={{ fontSize: 12, color: "#E8650A", fontWeight: 700, textDecoration: "none", background: "rgba(232, 101, 10, 0.08)", borderRadius: 20, padding: "5px 12px" }}
+              className="collapsed-hide">
               🔗 Live Menu View
             </Link>
           </div>
         </div>
 
         {/* Dynamic Page Content */}
-        <div style={{ padding: "24px", minHeight: "calc(100vh - 120px)" }}>
+        <div className="main-content-body" style={{ padding: "24px", minHeight: "calc(100vh - 120px)" }}>
           {children}
         </div>
 

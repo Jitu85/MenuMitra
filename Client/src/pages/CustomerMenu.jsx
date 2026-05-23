@@ -412,10 +412,39 @@ export default function CustomerMenu() {
           border-radius: 50%;
           background: #c0392b;
         }
+
+        /* Mobile adjustments for Bilingual Customer Menu */
+        @media (max-width: 600px) {
+          .customer-menu-header {
+            padding: 16px 12px !important;
+            flex-direction: column !important;
+            gap: 12px !important;
+            text-align: center !important;
+          }
+          .menu-details-grid {
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
+            padding: 12px !important;
+          }
+          .menu-main-body {
+            padding: 12px !important;
+          }
+          .floating-cart-drawer {
+            bottom: 12px !important;
+            width: 95% !important;
+          }
+          .floating-cart-inner {
+            padding: 12px !important;
+          }
+          .item-card {
+            padding: 12px !important;
+            gap: 10px !important;
+          }
+        }
       `}</style>
 
       {/* Header Banner */}
-      <header style={{ background: "linear-gradient(135deg, #E8650A, #C9920A)", color: "white", padding: "24px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <header className="customer-menu-header" style={{ background: "linear-gradient(135deg, #E8650A, #C9920A)", color: "white", padding: "24px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <span style={{ fontSize: "11px", fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255, 255, 255, 0.75)" }}>{t.scanOrder}</span>
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "28px", fontWeight: 900, lineHeight: 1.1, margin: "4px 0 2px" }}>
@@ -504,10 +533,10 @@ export default function CustomerMenu() {
 
       {/* MAIN MENU TAB */}
       {checkoutStep === "menu" && (
-        <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto", paddingBottom: "100px" }}>
+        <div className="menu-main-body" style={{ padding: "20px", maxWidth: "800px", margin: "0 auto", paddingBottom: "100px" }}>
           
           {/* Table select & Custom details */}
-          <div style={{ background: "white", borderRadius: "16px", border: "1px solid #f5ede5", padding: "18px", marginBottom: "20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <div className="menu-details-grid" style={{ background: "white", borderRadius: "16px", border: "1px solid #f5ede5", padding: "18px", marginBottom: "20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
             <div>
               <label style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", color: "#888", display: "block", marginBottom: "6px" }}>{t.tableLabel} *</label>
               <select value={tableNumber} onChange={e => setTableNumber(e.target.value)} style={{ width: "100%", padding: "10px 12px", border: "1.5px solid #f0e8df", borderRadius: "8px", outline: "none", fontSize: "13px" }}>
@@ -587,8 +616,8 @@ export default function CustomerMenu() {
 
       {/* Floating Cart Drawer Indicator */}
       {getCartCount() > 0 && checkoutStep === "menu" && (
-        <div style={{ position: "fixed", bottom: "16px", left: "50%", transform: "translateX(-50%)", width: "90%", maxWidth: "500px", zIndex: 90 }}>
-          <div style={{ background: "linear-gradient(135deg, #1C1C1E, #2A2A2E)", color: "white", padding: "16px 20px", borderRadius: "50px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.3)" }}>
+        <div className="floating-cart-drawer" style={{ position: "fixed", bottom: "16px", left: "50%", transform: "translateX(-50%)", width: "90%", maxWidth: "500px", zIndex: 90 }}>
+          <div className="floating-cart-inner" style={{ background: "linear-gradient(135deg, #1C1C1E, #2A2A2E)", color: "white", padding: "16px 20px", borderRadius: "50px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.3)" }}>
             <div>
               <div style={{ fontSize: "12px", fontWeight: 700, color: "rgba(255,255,255,0.6)" }}>{getCartCount()} {t.items} added</div>
               <div style={{ fontSize: "16px", fontWeight: 900, color: "#E8650A" }}>Subtotal: ₹{getCartTotal()}</div>

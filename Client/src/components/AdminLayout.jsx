@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 
 export default function AdminLayout({ children, pageTitle }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -21,7 +22,7 @@ export default function AdminLayout({ children, pageTitle }) {
   ];
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#111", fontFamily: "'DM Sans',sans-serif", color: "white" }}>
+    <div className="admin-layout-wrapper" style={{ display: "flex", minHeight: "100vh", background: "#111", fontFamily: "'DM Sans',sans-serif", color: "white" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,600&family=DM+Sans:wght@300;400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -70,10 +71,72 @@ export default function AdminLayout({ children, pageTitle }) {
           filter: brightness(1.1);
           transform: translateY(-1px);
         }
+
+        /* Mobile sidebar overlays */
+        .sidebar-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.5);
+          backdrop-filter: blur(3px);
+          z-index: 999;
+          animation: fadeIn 0.25s ease-out;
+        }
+        
+        .hamburger-btn {
+          display: none;
+          background: none;
+          border: none;
+          font-size: 22px;
+          color: #E8650A;
+          cursor: pointer;
+          padding: 4px;
+          margin-right: 8px;
+          line-height: 1;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+          .hamburger-btn {
+            display: block !important;
+          }
+          
+          .admin-sidebar {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            width: 250px !important;
+            z-index: 1000 !important;
+            transform: translateX(-100%) !important;
+            box-shadow: 20px 0 50px rgba(0,0,0,0.3) !important;
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1) !important;
+          }
+          
+          .admin-sidebar.mobile-open {
+            transform: translateX(0) !important;
+          }
+
+          .topbar-container {
+            padding: 12px 16px !important;
+          }
+
+          .main-content-body {
+            padding: 16px !important;
+          }
+        }
       `}</style>
 
+      {/* Mobile Backdrop overlay */}
+      {mobileSidebarOpen && (
+        <div className="sidebar-backdrop" onClick={() => setMobileSidebarOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside style={{
+      <aside className={`admin-sidebar ${mobileSidebarOpen ? "mobile-open" : ""}`} style={{
         width: sidebarOpen ? 230 : 70, flexShrink: 0,
         background: "#141414", borderRight: "1px solid rgba(255, 255, 255, 0.06)",
         display: "flex", flexDirection: "column",
@@ -83,7 +146,7 @@ export default function AdminLayout({ children, pageTitle }) {
         {/* Logo */}
         <div style={{ padding: "22px 18px 16px", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #E8650A, #C9920A)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>🍽️</div>
-          {sidebarOpen && (
+          {(sidebarOpen || mobileSidebarOpen) && (
             <div style={{ overflow: "hidden" }}>
               <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 16, color: "white", whiteSpace: "nowrap" }}>MenuMitra</div>
               <div style={{ fontSize: 8, color: "#E8650A", fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Admin Panel</div>
@@ -92,7 +155,7 @@ export default function AdminLayout({ children, pageTitle }) {
         </div>
 
         {/* Super Admin Info */}
-        {sidebarOpen && (
+        {(sidebarOpen || mobileSidebarOpen) && (
           <div style={{ margin: "12px 14px", background: "rgba(232, 101, 10, 0.1)", border: "1px solid rgba(232, 101, 10, 0.2)", borderRadius: 10, padding: "10px 12px" }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: "#E8650A", marginBottom: 2 }}>🔐 Super Admin</div>
             <div style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.35)" }}>Abhijit Kumar Misra</div>
@@ -103,9 +166,9 @@ export default function AdminLayout({ children, pageTitle }) {
         {/* Nav Links */}
         <nav style={{ flex: 1, padding: "8px 10px", overflowY: "auto" }}>
           {navItems.map(item => (
-            <NavLink key={item.to} to={item.to} className="admin-nav-link" end={item.to === "/admin/dashboard"}>
+            <NavLink key={item.to} to={item.to} className="admin-nav-link" end={item.to === "/admin/dashboard"} onClick={() => setMobileSidebarOpen(false)}>
               <span style={{ fontSize: 17, flexShrink: 0 }}>{item.icon}</span>
-              {sidebarOpen && <span style={{ whiteSpace: "nowrap" }}>{item.label}</span>}
+              {(sidebarOpen || mobileSidebarOpen) && <span style={{ whiteSpace: "nowrap" }}>{item.label}</span>}
             </NavLink>
           ))}
         </nav>
@@ -114,11 +177,11 @@ export default function AdminLayout({ children, pageTitle }) {
         <div style={{ padding: "12px 10px", borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
           <div className="admin-nav-link" onClick={() => setSidebarOpen(v => !v)} style={{ margin: 0 }}>
             <span style={{ fontSize: 15, flexShrink: 0 }}>{sidebarOpen ? "◀" : "▶"}</span>
-            {sidebarOpen && <span style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.3)", fontWeight: 500 }}>Collapse</span>}
+            {(sidebarOpen || mobileSidebarOpen) && <span style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.3)", fontWeight: 500 }}>Collapse</span>}
           </div>
-          <div className="admin-nav-link" onClick={handleLogout} style={{ margin: "6px 0 0", color: "#e74c3c" }}>
+          <div className="admin-nav-link" onClick={() => { setMobileSidebarOpen(false); handleLogout(); }} style={{ margin: "6px 0 0", color: "#e74c3c" }}>
             <span style={{ fontSize: 15, flexShrink: 0 }}>🚪</span>
-            {sidebarOpen && <span style={{ fontSize: 12, color: "#e74c3c", fontWeight: "bold" }}>Sign Out</span>}
+            {(sidebarOpen || mobileSidebarOpen) && <span style={{ fontSize: 12, color: "#e74c3c", fontWeight: "bold" }}>Sign Out</span>}
           </div>
         </div>
       </aside>
@@ -126,12 +189,15 @@ export default function AdminLayout({ children, pageTitle }) {
       {/* Main Content Area */}
       <main style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minWidth: 0 }}>
         {/* Topbar */}
-        <div style={{ background: "#141414", borderBottom: "1px solid rgba(255, 255, 255, 0.06)", padding: "16px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 50 }}>
-          <div>
-            <div style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.3)", fontWeight: 500, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 2 }}>
-              MenuMitra Admin · {pageTitle}
+        <div className="topbar-container" style={{ background: "#141414", borderBottom: "1px solid rgba(255, 255, 255, 0.06)", padding: "16px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 50 }}>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <button className="hamburger-btn" onClick={() => setMobileSidebarOpen(true)}>☰</button>
+            <div>
+              <div style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.3)", fontWeight: 500, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 2 }}>
+                MenuMitra Admin · {pageTitle}
+              </div>
+              <div style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.2)" }}>{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}</div>
             </div>
-            <div style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.2)" }}>{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}</div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#40916C", boxShadow: "0 0 0 3px rgba(64,145,108,0.2)" }}/>
@@ -140,7 +206,7 @@ export default function AdminLayout({ children, pageTitle }) {
         </div>
 
         {/* Dynamic Page Content */}
-        <div style={{ padding: "28px", minHeight: "calc(100vh - 120px)" }}>
+        <div className="main-content-body" style={{ padding: "28px", minHeight: "calc(100vh - 120px)" }}>
           {children}
         </div>
 
