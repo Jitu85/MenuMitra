@@ -1,20 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import OwnerLayout from '../../components/OwnerLayout';
 import toast, { Toaster } from 'react-hot-toast';
-
-const INIT_CATEGORIES = [
-  { id: "CAT1", name: "Main Course", nameHi: "मुख्य व्यंजन", items: 6 },
-  { id: "CAT2", name: "Breads", nameHi: "रोटी / ब्रेड", items: 4 },
-  { id: "CAT3", name: "Beverages", nameHi: "पेय पदार्थ", items: 5 },
-];
-
-const INIT_ITEMS = [
-  { id: "ITM001", categoryId: "CAT1", nameEn: "Dal Makhani", nameHi: "दाल मखनी", descEn: "Creamy black lentil curry", descHi: "मलाईदार दाल करी", price: 180, isVeg: true, isAvailable: true, photo: "🍛", sales: 142 },
-  { id: "ITM002", categoryId: "CAT1", nameEn: "Paneer Butter Masala", nameHi: "पनीर बटर मसाला", descEn: "Cottage cheese in rich tomato gravy", descHi: "पनीर टमाटर की ग्रेवी में", price: 220, isVeg: true, isAvailable: true, photo: "🧆", sales: 98 },
-  { id: "ITM003", categoryId: "CAT1", nameEn: "Chicken Curry", nameHi: "चिकन करी", descEn: "Traditional homestyle chicken curry", descHi: "देसी चिकन करी", price: 280, isVeg: false, isAvailable: true, photo: "🍗", sales: 211 },
-  { id: "ITM005", categoryId: "CAT2", nameEn: "Butter Naan", nameHi: "बटर नान", descEn: "Soft leavened bread with butter", descHi: "मक्खन के साथ नरम नान", price: 40, isVeg: true, isAvailable: true, photo: "🫓", sales: 289 },
-  { id: "ITM006", categoryId: "CAT2", nameEn: "Tandoori Roti", nameHi: "तंदूरी रोटी", descEn: "Whole wheat bread from tandoor", descHi: "तंदूर की गेहूं की रोटी", price: 25, isVeg: true, isAvailable: true, photo: "🫓", sales: 334 },
-];
+import * as menuService from '../../services/menuService';
 
 const inputStyle = (err) => ({
   width: "100%", padding: "11px 14px",
@@ -35,61 +22,135 @@ const selectStyle = {
 };
 
 export default function MenuManagement() {
-  const [categories, setCategories] = useState(INIT_CATEGORIES);
-  const [items, setItems] = useState(INIT_ITEMS);
+  const [categories, setCategories] = useState([]);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [itemModal, setItemModal] = useState(null);
   const [catModal, setCatModal] = useState(null);
 
+  const BLANK_ITEM = { id: null, category_id: "", name_en: "", name_hi: "", description_en: "", description_hi: "", price: "", is_veg: true, is_available: true, photo_url: "🍛" };
+  const BLANK_CAT = { id: null, name_en: "", name_hi: "", sort_order: 0 };
 
-  const BLANK_ITEM = { id: null, categoryId: "CAT1", nameEn: "", nameHi: "", descEn: "", descHi: "", price: "", isVeg: true, isAvailable: true, photo: "🍛" };
+  // Load categories and items on mount
+  useEffect(() => {
+    loadMenuData();
+  }, []);
 
-  const saveItem = (item) => {
-    if (!item.nameEn || !item.price) {
-      toast.error("Name and price are required.");
+  const loadMenuData = async () => {
+    try {
+      setLoading(true);
+      const catRes = await menuService.getCategories();
+      const itemRes = await menuService.getItems();
+      
+      setCategories(catRes.data || []);
+      setItems(itemRes.data || []);
+    } catch (e) {
+      console.error(e);
+      toast.error("❌ Failed to load menu details from database.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveItem = async (item) => {
+    if (!item.name_en || !item.name_hi || item.price === "") {
+      toast.error("❌ English/Hindi names and price are required.");
       return;
     }
-    if (item.id) {
-      setItems(prev => prev.map(i => i.id === item.id ? { ...item, price: Number(item.price) } : i));
-      toast.success("Item updated successfully.");
-    } else {
-      const newItem = { ...item, id: "ITM" + Date.now(), price: Number(item.price), sales: 0 };
-      setItems(prev => [...prev, newItem]);
-      toast.success("New item added to your menu.");
+    
+    try {
+      const payload = {
+        name_en: item.name_en,
+        name_hi: item.name_hi,
+        category_id: item.category_id || null,
+        description_en: item.description_en || "",
+        description_hi: item.description_hi || "",
+        price: Number(item.price),
+        photo_url: item.photo_url || "🍛",
+        is_veg: item.is_veg,
+        is_available: item.is_available,
+        sort_order: 0,
+      };
+
+      if (item.id) {
+        // Update item in database
+        await menuService.updateItem(item.id, payload);
+        toast.success("✅ Menu item successfully updated in database!");
+      } else {
+        // Create new item in database
+        await menuService.createItem(payload);
+        toast.success("✅ New item successfully created in database!");
+      }
+      setItemModal(null);
+      loadMenuData(); // Reload menu
+    } catch (e) {
+      console.error(e);
+      toast.error(e.message || "❌ Failed to save menu item.");
     }
-    setItemModal(null);
   };
 
-  const deleteItem = (id) => {
-    setItems(prev => prev.filter(i => i.id !== id));
-    toast.success("Item removed from menu.");
-    setItemModal(null);
+  const deleteItem = async (id) => {
+    try {
+      await menuService.deleteItem(id);
+      toast.success("✅ Item deleted successfully from database.");
+      setItemModal(null);
+      loadMenuData();
+    } catch (e) {
+      console.error(e);
+      toast.error("❌ Failed to delete menu item.");
+    }
   };
 
-  const toggleAvailability = (id) => {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, isAvailable: !i.isAvailable } : i));
-    toast.success("Availability updated.");
+  const toggleAvailability = async (item) => {
+    try {
+      const updatedAvailable = !item.is_available;
+      await menuService.updateItem(item.id, { is_available: updatedAvailable });
+      toast.success("✅ Availability toggled in database!");
+      loadMenuData();
+    } catch (e) {
+      console.error(e);
+      toast.error("❌ Failed to update availability.");
+    }
   };
 
-  const saveCat = (cat) => {
-    if (!cat.name) {
-      toast.error("Category name is required.");
+  const saveCat = async (cat) => {
+    if (!cat.name_en || !cat.name_hi) {
+      toast.error("❌ Both English and Hindi category names are required.");
       return;
     }
-    if (cat.id) {
-      setCategories(prev => prev.map(c => c.id === cat.id ? cat : c));
-      toast.success("Category updated.");
-    } else {
-      setCategories(prev => [...prev, { ...cat, id: "CAT" + Date.now(), items: 0 }]);
-      toast.success("Category created.");
+
+    try {
+      const payload = {
+        name_en: cat.name_en,
+        name_hi: cat.name_hi,
+        sort_order: Number(cat.sort_order || 0),
+      };
+
+      if (cat.id) {
+        await menuService.updateCategory(cat.id, payload);
+        toast.success("✅ Category updated in database.");
+      } else {
+        await menuService.createCategory(payload);
+        toast.success("✅ Category created in database.");
+      }
+      setCatModal(null);
+      loadMenuData();
+    } catch (e) {
+      console.error(e);
+      toast.error("❌ Failed to save category.");
     }
-    setCatModal(null);
   };
 
-  const deleteCat = (id) => {
-    setCategories(prev => prev.filter(c => c.id !== id));
-    setItems(prev => prev.filter(i => i.categoryId !== id));
-    toast.success("Category and its items removed.");
-    setCatModal(null);
+  const deleteCat = async (id) => {
+    try {
+      await menuService.deleteCategory(id);
+      toast.success("✅ Category deleted. Items moved to Uncategorized.");
+      setCatModal(null);
+      loadMenuData();
+    } catch (e) {
+      console.error(e);
+      toast.error("❌ Failed to delete category.");
+    }
   };
 
   return (
@@ -99,124 +160,185 @@ export default function MenuManagement() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 22, flexWrap: "wrap", gap: 12 }}>
           <div>
             <h1 style={{ fontFamily: "'Playfair Display',serif", fontSize: 28, fontWeight: 900, marginBottom: 4 }}>Menu Management</h1>
-            <p style={{ fontSize: 13, color: "#999" }}>{items.length} items across {categories.length} categories</p>
+            <p style={{ fontSize: 13, color: "#999" }}>Configure your restaurant catalog, bilingual items, pricing, and active categories.</p>
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button className="btn-ghost" onClick={() => setCatModal({ id: null, name: "", nameHi: "" })}>+ Add Category</button>
-            <button className="btn-primary" onClick={() => setItemModal({ ...BLANK_ITEM })}>+ Add Item</button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="btn-secondary" onClick={() => setCatModal(BLANK_CAT)}>📂 + Category</button>
+            <button className="btn-primary" onClick={() => setItemModal(BLANK_ITEM)}>🍔 + Add Dish</button>
           </div>
         </div>
 
-        {/* Category tags */}
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 22 }}>
-          {categories.map(cat => (
-            <div key={cat.id} style={{ display: "flex", alignItems: "center", background: "white", border: "1px solid #f0e8df", borderRadius: 20, overflow: "hidden" }}>
-              <span style={{ padding: "7px 14px", fontSize: 12, fontWeight: 700, color: "#555" }}>{cat.name}</span>
-              <button onClick={() => setCatModal({ ...cat })} style={{ padding: "7px 10px", background: "rgba(232,101,10,0.07)", border: "none", cursor: "pointer", fontSize: 12, color: "#E8650A" }}>✏️</button>
-            </div>
-          ))}
-        </div>
-
-        {/* Items Grouped By Categories */}
-        {categories.map(cat => {
-          const catItems = items.filter(i => i.categoryId === cat.id);
-          return (
-            <div key={cat.id} style={{ marginBottom: 28 }}>
-              <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 800, marginBottom: 12 }}>{cat.name} <span style={{ fontSize: 12, color: "#999", fontWeight: "normal" }}>({cat.nameHi})</span></h3>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
-                {catItems.map(item => (
-                  <div key={item.id} className="card" style={{ padding: 16, display: "flex", gap: 12, position: "relative" }}>
-                    <span style={{ fontSize: 32 }}>{item.photo}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontSize: 13, fontWeight: "bold" }}>{item.nameEn}</span>
-                        <span style={{ fontSize: 11, color: item.isVeg ? "#2D6A4F" : "#c0392b" }}>{item.isVeg ? "🟢" : "🔴"}</span>
-                      </div>
-                      <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>{item.descEn}</div>
-                      <div style={{ fontSize: 13, fontWeight: "bold", color: "#E8650A", marginTop: 8 }}>₹{item.price}</div>
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
-                      <button onClick={() => setItemModal({ ...item })} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14 }}>✏️</button>
-                      <button onClick={() => toggleAvailability(item.id)} style={{ background: item.isAvailable ? "#2D6A4F" : "#c0392b", border: "none", color: "white", padding: "4px 8px", borderRadius: 6, fontSize: 10, cursor: "pointer", fontWeight: "bold" }}>
-                        {item.isAvailable ? "Available" : "Stock Out"}
-                      </button>
-                    </div>
+        {/* Categories Section */}
+        <div style={{ marginBottom: 26 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#E8650A", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12 }}>📂 Categories</div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {categories.map(c => {
+              const catItemsCount = items.filter(i => i.category_id === c.id).length;
+              return (
+                <div key={c.id} className="card" style={{ padding: "12px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }} onClick={() => setCatModal(c)}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A" }}>{c.name_en}</div>
+                    <div style={{ fontSize: 10, color: "#bbb" }}>{c.name_hi} · {catItemsCount} dish{catItemsCount !== 1 ? 'es' : ''}</div>
                   </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+                  <span style={{ fontSize: 11, color: "#E8650A" }}>✏️</span>
+                </div>
+              );
+            })}
+            {categories.length === 0 && (
+              <div style={{ fontSize: 12, color: "#bbb" }}>No active categories created. Click "+ Category" to begin.</div>
+            )}
+          </div>
+        </div>
 
-        {/* Item Modal */}
-        {itemModal && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 8000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-            <div style={{ background: "white", borderRadius: 24, padding: "32px", maxWidth: 500, width: "100%" }}>
-              <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 900, marginBottom: 20 }}>{itemModal.id ? "Edit Item" : "Add New Item"}</h2>
-
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ fontSize: 12, fontWeight: "bold", color: "#666", display: "block", marginBottom: 6 }}>Icon / Emoji</label>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {["🍛", "🍗", "🥘", "🧆", "🫓", "☕", "🥛", "🍮"].map(e => (
-                    <button key={e} onClick={() => setItemModal(m => ({ ...m, photo: e }))} style={{ width: 36, height: 36, fontSize: 18, border: itemModal.photo === e ? "2px solid #E8650A" : "1.5px solid #ccc", background: "white", borderRadius: 8, cursor: "pointer" }}>{e}</button>
+        {/* Items Listing */}
+        <div className="card" style={{ padding: 22, overflowX: "auto" }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#E8650A", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 16 }}>🍽️ Menu Items Catalog</div>
+          
+          {loading ? (
+            <div style={{ textAlign: "center", padding: "40px", color: "#bbb" }}>Loading menu from database...</div>
+          ) : items.length > 0 ? (
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid #f5ede5" }}>
+                  {["Item Details", "Category", "Price", "Type", "Status", "Actions"].map(h => (
+                    <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "#bbb", textTransform: "uppercase", letterSpacing: 1 }}>{h}</th>
                   ))}
+                </tr>
+              </thead>
+              <tbody>
+                {items.map(item => {
+                  const cat = categories.find(c => c.id === item.category_id);
+                  return (
+                    <tr key={item.id} className="table-row" style={{ borderBottom: "1px solid #f5ede5" }}>
+                      <td style={{ padding: "12px 14px" }}>
+                        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                          <span style={{ fontSize: 20 }}>{item.photo_url || "🍛"}</span>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A" }}>{item.name_en}</div>
+                            <div style={{ fontSize: 10, color: "#bbb" }}>{item.name_hi}</div>
+                            {item.description_en && <div style={{ fontSize: 10, color: "#999", marginTop: 2 }}>{item.description_en}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ padding: "12px 14px", fontSize: 12, color: "#666" }}>
+                        {cat ? cat.name_en : <em style={{ color: "#bbb" }}>Uncategorized</em>}
+                      </td>
+                      <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 800, color: "#1A1A1A" }}>₹{item.price}</td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <span style={{ fontSize: 9, fontWeight: 800, background: item.is_veg ? "rgba(46,204,113,0.12)" : "rgba(231,76,60,0.12)", color: item.is_veg ? "#2ecc71" : "#e74c3c", padding: "3px 6px", borderRadius: 5 }}>
+                          {item.is_veg ? "🟢 VEG" : "🔴 NON-VEG"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <button onClick={() => toggleAvailability(item)}
+                          style={{ border: "none", background: item.is_available ? "rgba(45,106,79,0.1)" : "rgba(192,57,43,0.1)", color: item.is_available ? "#2D6A4F" : "#c0392b", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                          {item.is_available ? "Available ✓" : "Sold Out ✗"}
+                        </button>
+                      </td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <button onClick={() => setItemModal(item)} style={{ background: "none", border: "none", color: "#E8650A", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>✏️ Edit</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <div style={{ textAlign: "center", padding: "40px", color: "#bbb" }}>Your menu is completely empty. Click "+ Add Dish" to build your database!</div>
+          )}
+        </div>
+
+        {/* --- DISH MODAL --- */}
+        {itemModal && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+            <div className="card" style={{ maxWidth: 500, width: "100%", padding: "26px", animation: "modalIn 0.25s ease-out" }}>
+              <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, fontWeight: 800, marginBottom: 18 }}>{itemModal.id ? "🍔 Edit Menu Dish" : "🍔 Add New Menu Dish"}</div>
+              
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>English Title *</label>
+                  <input value={itemModal.name_en} onChange={e => setItemModal({ ...itemModal, name_en: e.target.value })} placeholder="e.g. Butter Naan" style={inputStyle(!itemModal.name_en)} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Hindi Title *</label>
+                  <input value={itemModal.name_hi} onChange={e => setItemModal({ ...itemModal, name_hi: e.target.value })} placeholder="उदा. बटर नान" style={inputStyle(!itemModal.name_hi)} />
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 12, marginBottom: 12 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: "bold", color: "#666", display: "block", marginBottom: 4 }}>Name (EN)</label>
-                  <input value={itemModal.nameEn} onChange={e => setItemModal(m => ({ ...m, nameEn: e.target.value }))} style={inputStyle(false)} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: "bold", color: "#666", display: "block", marginBottom: 4 }}>नाम (HI)</label>
-                  <input value={itemModal.nameHi} onChange={e => setItemModal(m => ({ ...m, nameHi: e.target.value }))} style={inputStyle(false)} />
-                </div>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: "bold", color: "#666", display: "block", marginBottom: 4 }}>Price (₹)</label>
-                  <input type="number" value={itemModal.price} onChange={e => setItemModal(m => ({ ...m, price: e.target.value }))} style={inputStyle(false)} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: "bold", color: "#666", display: "block", marginBottom: 4 }}>Category</label>
-                  <select value={itemModal.categoryId} onChange={e => setItemModal(m => ({ ...m, categoryId: e.target.value }))} style={selectStyle}>
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Category</label>
+                  <select value={itemModal.category_id || ""} onChange={e => setItemModal({ ...itemModal, category_id: e.target.value })} style={selectStyle}>
+                    <option value="">Uncategorized</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name_en}</option>)}
                   </select>
                 </div>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Price (₹) *</label>
+                  <input type="number" value={itemModal.price} onChange={e => setItemModal({ ...itemModal, price: e.target.value })} placeholder="180" style={inputStyle(itemModal.price === "")} />
+                </div>
               </div>
 
-              <div style={{ display: "flex", gap: 10, margin: "18px 0 0" }}>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>English Description</label>
+                <input value={itemModal.description_en || ""} onChange={e => setItemModal({ ...itemModal, description_en: e.target.value })} placeholder="Brief description in English" style={inputStyle()} />
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Hindi Description</label>
+                <input value={itemModal.description_hi || ""} onChange={e => setItemModal({ ...itemModal, description_hi: e.target.value })} placeholder="संक्षिप्त विवरण हिंदी में" style={inputStyle()} />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 0.8fr", gap: 12, marginBottom: 20, alignItems: "center" }}>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Emoji Photo</label>
+                  <input value={itemModal.photo_url || "🍛"} onChange={e => setItemModal({ ...itemModal, photo_url: e.target.value })} style={inputStyle()} />
+                </div>
+                <div style={{ display: "flex", gap: 6, marginTop: 15 }}>
+                  <input type="checkbox" id="isVeg" checked={itemModal.is_veg} onChange={e => setItemModal({ ...itemModal, is_veg: e.target.checked })} style={{ cursor: "pointer" }} />
+                  <label htmlFor="isVeg" style={{ fontSize: 12, fontWeight: 700, color: "#333", cursor: "pointer" }}>Is Vegetarian?</label>
+                </div>
+                <div style={{ display: "flex", gap: 6, marginTop: 15 }}>
+                  <input type="checkbox" id="isAvailable" checked={itemModal.is_available} onChange={e => setItemModal({ ...itemModal, is_available: e.target.checked })} style={{ cursor: "pointer" }} />
+                  <label htmlFor="isAvailable" style={{ fontSize: 12, fontWeight: 700, color: "#333", cursor: "pointer" }}>In Stock?</label>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setItemModal(null)}>Cancel</button>
                 {itemModal.id && (
-                  <button onClick={() => deleteItem(itemModal.id)} style={{ padding: "10px 18px", background: "rgba(192,57,43,0.08)", color: "#c0392b", border: "1px solid rgba(192,57,43,0.2)", borderRadius: 50, cursor: "pointer" }}>Delete</button>
+                  <button className="btn-secondary" style={{ flex: 1, borderColor: "#e74c3c", color: "#e74c3c" }} onClick={() => deleteItem(itemModal.id)}>🗑 Delete</button>
                 )}
-                <button onClick={() => setItemModal(null)} style={{ flex: 1, padding: "10px", border: "none", background: "#f5f0eb", borderRadius: 50, cursor: "pointer" }}>Cancel</button>
-                <button onClick={() => saveItem(itemModal)} className="btn-primary" style={{ flex: 2 }}>Save</button>
+                <button className="btn-primary" style={{ flex: 1.5 }} onClick={() => saveItem(itemModal)}>💾 Save Dish</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Category Modal */}
+        {/* --- CATEGORY MODAL --- */}
         {catModal && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 8000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ background: "white", borderRadius: 22, padding: 28, maxWidth: 380, width: "100%" }}>
-              <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, fontWeight: 900, marginBottom: 16 }}>{catModal.id ? "Edit Category" : "Add Category"}</h2>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+            <div className="card" style={{ maxWidth: 440, width: "100%", padding: "26px", animation: "modalIn 0.25s ease-out" }}>
+              <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, fontWeight: 800, marginBottom: 18 }}>{catModal.id ? "📂 Edit Category" : "📂 Add New Category"}</div>
+              
               <div style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 12, fontWeight: "bold", color: "#666", display: "block", marginBottom: 4 }}>Name (EN)</label>
-                <input value={catModal.name} onChange={e => setCatModal(m => ({ ...m, name: e.target.value }))} style={inputStyle(false)} />
+                <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>English Name *</label>
+                <input value={catModal.name_en || ""} onChange={e => setCatModal({ ...catModal, name_en: e.target.value })} placeholder="e.g. Main Course" style={inputStyle(!catModal.name_en)} />
               </div>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 12, fontWeight: "bold", color: "#666", display: "block", marginBottom: 4 }}>नाम (HI)</label>
-                <input value={catModal.nameHi} onChange={e => setCatModal(m => ({ ...m, nameHi: e.target.value }))} style={inputStyle(false)} />
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Hindi Name *</label>
+                <input value={catModal.name_hi || ""} onChange={e => setCatModal({ ...catModal, name_hi: e.target.value })} placeholder="उदा. मुख्य व्यंजन" style={inputStyle(!catModal.name_hi)} />
               </div>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Sorting Order Weight (Numeric)</label>
+                <input type="number" value={catModal.sort_order || 0} onChange={e => setCatModal({ ...catModal, sort_order: e.target.value })} placeholder="0" style={inputStyle()} />
+              </div>
+
               <div style={{ display: "flex", gap: 10 }}>
+                <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setCatModal(null)}>Cancel</button>
                 {catModal.id && (
-                  <button onClick={() => deleteCat(catModal.id)} style={{ padding: "10px 16px", background: "rgba(192,57,43,0.08)", color: "#c0392b", border: "none", borderRadius: 50, cursor: "pointer" }}>🗑️</button>
+                  <button className="btn-secondary" style={{ flex: 1, borderColor: "#e74c3c", color: "#e74c3c" }} onClick={() => deleteCat(catModal.id)}>🗑 Delete</button>
                 )}
-                <button onClick={() => setCatModal(null)} style={{ flex: 1, padding: "10px", border: "none", background: "#f5f0eb", borderRadius: 50, cursor: "pointer" }}>Cancel</button>
-                <button onClick={() => saveCat(catModal)} className="btn-primary" style={{ flex: 2 }}>Save</button>
+                <button className="btn-primary" style={{ flex: 1.5 }} onClick={() => saveCat(catModal)}>💾 Save Category</button>
               </div>
             </div>
           </div>

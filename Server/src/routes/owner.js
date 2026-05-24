@@ -47,7 +47,7 @@ router.get('/profile', async (req, res, next) => {
   }
 });
 
-// Update Owner Profile
+// Update Owner Profile & Payments Config
 router.put('/profile', async (req, res, next) => {
   const prisma = req.app.get('prisma');
   try {
@@ -62,24 +62,33 @@ router.put('/profile', async (req, res, next) => {
       pincode,
       gstin,
       fssaiLicense,
-      profilePhotoUrl
+      profilePhotoUrl,
+      upiId,
+      paymentMethodPref,
+      razorpayKeyId,
+      razorpayKeySecret
     } = req.body;
+
+    const dataToUpdate = {};
+    if (businessName !== undefined) dataToUpdate.business_name = businessName;
+    if (businessType !== undefined) dataToUpdate.business_type = businessType;
+    if (ownerName !== undefined) dataToUpdate.owner_name = ownerName;
+    if (phone !== undefined) dataToUpdate.phone = phone;
+    if (address !== undefined) dataToUpdate.address = address;
+    if (city !== undefined) dataToUpdate.city = city;
+    if (state !== undefined) dataToUpdate.state = state;
+    if (pincode !== undefined) dataToUpdate.pincode = pincode;
+    if (gstin !== undefined) dataToUpdate.gstin = gstin || null;
+    if (fssaiLicense !== undefined) dataToUpdate.fssai_license = fssaiLicense || null;
+    if (profilePhotoUrl !== undefined) dataToUpdate.profile_photo_url = profilePhotoUrl || null;
+    if (upiId !== undefined) dataToUpdate.upi_id = upiId || null;
+    if (paymentMethodPref !== undefined) dataToUpdate.payment_method_pref = paymentMethodPref || 'both';
+    if (razorpayKeyId !== undefined) dataToUpdate.razorpay_key_id = razorpayKeyId || null;
+    if (razorpayKeySecret !== undefined) dataToUpdate.razorpay_key_secret = razorpayKeySecret || null;
 
     const updatedOwner = await prisma.owner.update({
       where: { id: req.user.id },
-      data: {
-        business_name: businessName,
-        business_type: businessType,
-        owner_name: ownerName,
-        phone,
-        address,
-        city,
-        state,
-        pincode,
-        gstin: gstin || null,
-        fssai_license: fssaiLicense || null,
-        profile_photo_url: profilePhotoUrl || null
-      }
+      data: dataToUpdate
     });
 
     res.json({
@@ -87,13 +96,16 @@ router.put('/profile', async (req, res, next) => {
       owner: {
         id: updatedOwner.id,
         businessName: updatedOwner.business_name,
-        ownerName: updatedOwner.owner_name
+        ownerName: updatedOwner.owner_name,
+        upiId: updatedOwner.upi_id,
+        paymentMethodPref: updatedOwner.payment_method_pref
       }
     });
   } catch (err) {
     next(err);
   }
 });
+
 
 // Get Dashboard Statistics
 router.get('/stats', async (req, res, next) => {

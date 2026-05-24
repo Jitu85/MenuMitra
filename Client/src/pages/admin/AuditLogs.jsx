@@ -1,26 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
-
-const MOCK_AUDIT_LOGS = [
-  { id: "LOG001", timestamp: "2026-05-18 14:32:11", actor: "Jitu", role: "admin", action: "PASSWORD_RESET", target: "OWN003 - Meena Devi", ip: "103.21.58.44", details: "Force reset initiated. Reset email dispatched to meena@chaicorner.com." },
-  { id: "LOG002", timestamp: "2026-05-18 11:20:05", actor: "Jitu", role: "admin", action: "ACCOUNT_SUSPENDED", target: "OWN007 - Harpreet Singh", ip: "103.21.58.44", details: "Account suspended due to non-payment for 90+ days." },
-  { id: "LOG018", timestamp: "2026-05-18 09:15:33", actor: "sunil@rajhotel.com", role: "owner", action: "ITEM_ADDED", target: "OWN002 - Raj Hotel", ip: "49.36.12.100", details: "New item added: 'Butter Chicken' — ₹320." },
-  { id: "LOG017", timestamp: "2026-05-17 22:44:18", actor: "ramesh@sharma.com", role: "owner", action: "PAYMENT_RECEIVED", target: "OWN001 - Sharma's Dhaba", ip: "49.15.33.77", details: "Order ORD-20260517-0089 paid. Amount: ₹490. Method: Razorpay." },
-  { id: "LOG016", timestamp: "2026-05-17 18:30:02", actor: "Jitu", role: "admin", action: "SUBSCRIPTION_EXTENDED", target: "OWN005 - Priya Nair", ip: "103.21.58.44", details: "Subscription manually extended by 30 days as goodwill gesture." },
-  { id: "LOG015", timestamp: "2026-05-17 16:12:55", actor: "deepak@guptasweets.com", role: "owner", action: "QR_DOWNLOADED", target: "OWN006 - Gupta Sweet House", ip: "59.88.12.201", details: "QR code downloaded in PNG format." },
-  { id: "LOG014", timestamp: "2026-05-17 14:08:33", actor: "Jitu", role: "admin", action: "ACCOUNT_ACTIVATED", target: "OWN008 - Mohammed Nizam", ip: "103.21.58.44", details: "Account manually activated after email verification override." },
-  { id: "LOG013", timestamp: "2026-05-16 20:55:11", actor: "priya@cafemonsoon.com", role: "owner", action: "PASSWORD_CHANGED", target: "OWN005 - Priya Nair", ip: "125.63.22.88", details: "Owner changed their account password via Settings." },
-  { id: "LOG012", timestamp: "2026-05-16 17:33:44", actor: "arjun@spicegarden.com", role: "owner", action: "UPI_QR_UPLOADED", target: "OWN004 - Spice Garden", ip: "103.56.90.11", details: "New UPI QR image uploaded. Previous image replaced." },
-  { id: "LOG011", timestamp: "2026-05-15 11:22:09", actor: "Jitu", role: "admin", action: "PLAN_PRICE_UPDATED", target: "MenuMitra Standard Plan", ip: "103.21.58.44", details: "Plan price updated from ₹200 to ₹100/month." }
-];
+import { getAuditLogs } from '../../services/adminService';
 
 export default function AuditLogs() {
+  const [logs, setLogs] = useState([]);
   const [auditFilter, setAuditFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
 
-  const filteredLogs = MOCK_AUDIT_LOGS.filter(log => {
+  useEffect(() => {
+    async function loadLogs() {
+      try {
+        setLoading(true);
+        const data = await getAuditLogs();
+        setLogs(data);
+      } catch (err) {
+        console.error("Failed to load audit logs", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadLogs();
+  }, []);
+
+  const filteredLogs = logs.filter(log => {
     if (auditFilter === "all") return true;
-    if (auditFilter === "admin") return log.role === "admin";
-    if (auditFilter === "owner") return log.role === "owner";
+    if (auditFilter === "admin") return log.actorRole === "admin";
+    if (auditFilter === "owner") return log.actorRole === "owner";
     return log.action.includes(auditFilter.toUpperCase());
   });
 
@@ -48,51 +53,70 @@ export default function AuditLogs() {
           </div>
         </div>
 
-        <div style={{ background: "#1E1E1E", borderRadius: 18, border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
-              <thead>
-                <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.2, textTransform: "uppercase" }}>Timestamp</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.2, textTransform: "uppercase" }}>Actor</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.2, textTransform: "uppercase" }}>Role</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.2, textTransform: "uppercase" }}>Action</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.2, textTransform: "uppercase" }}>Target</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.2, textTransform: "uppercase" }}>IP Address</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.2, textTransform: "uppercase" }}>Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredLogs.map((log, i) => (
-                  <tr key={i} className="table-row" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", transition: "background 0.15s" }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
-                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
-                    <td style={{ padding: "12px 16px", fontSize: 11, color: "rgba(255,255,255,0.4)", whiteSpace: "nowrap" }}>
-                      <div>{log.timestamp.split(" ")[0]}</div>
-                      <div style={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>{log.timestamp.split(" ")[1]}</div>
-                    </td>
-                    <td style={{ padding: "12px 16px", fontSize: 12, fontWeight: 700, color: log.role === "admin" ? "#E8650A" : "rgba(255,255,255,0.65)" }}>{log.actor}</td>
-                    <td style={{ padding: "12px 16px" }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, background: log.role === "admin" ? "rgba(232,101,10,0.15)" : "rgba(255,255,255,0.06)", color: log.role === "admin" ? "#E8650A" : "rgba(255,255,255,0.4)", borderRadius: 6, padding: "2px 8px", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                        {log.role}
-                      </span>
-                    </td>
-                    <td style={{ padding: "12px 16px" }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "white", whiteSpace: "nowrap" }}>{log.action.replace(/_/g, " ")}</span>
-                    </td>
-                    <td style={{ padding: "12px 16px", fontSize: 11, color: "rgba(255,255,255,0.45)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{log.target}</td>
-                    <td style={{ padding: "12px 16px", fontSize: 11, color: "rgba(255,255,255,0.3)", fontFamily: "monospace" }}>{log.ip}</td>
-                    <td style={{ padding: "12px 16px", fontSize: 11, color: "rgba(255,255,255,0.55)", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={log.details}>{log.details}</td>
+        {loading ? (
+          <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
+            <div className="spinner" style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid rgba(232,101,10,0.1)", borderTopColor: "#E8650A", animation: "spin 1s linear infinite" }} />
+          </div>
+        ) : (
+          <div style={{ background: "#1E1E1E", borderRadius: 18, border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                    <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.2, textTransform: "uppercase" }}>Timestamp</th>
+                    <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.2, textTransform: "uppercase" }}>Actor</th>
+                    <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.2, textTransform: "uppercase" }}>Role</th>
+                    <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.2, textTransform: "uppercase" }}>Action</th>
+                    <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.2, textTransform: "uppercase" }}>Target</th>
+                    <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.2, textTransform: "uppercase" }}>Details</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredLogs.map((log, i) => (
+                    <tr key={i} className="table-row" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", transition: "background 0.15s" }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
+                        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+                      <td style={{ padding: "12px 16px", fontSize: 11, color: "rgba(255,255,255,0.4)", whiteSpace: "nowrap" }}>
+                        <div>{new Date(log.createdAt).toLocaleDateString()}</div>
+                        <div style={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>
+                          {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        </div>
+                      </td>
+                      <td style={{ padding: "12px 16px", fontSize: 12, fontWeight: 700, color: log.actorRole === "admin" ? "#E8650A" : "rgba(255,255,255,0.65)" }}>
+                        {log.actorId ? `User (${log.actorId.substring(0,8)})` : "Admin"}
+                      </td>
+                      <td style={{ padding: "12px 16px" }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, background: log.actorRole === "admin" ? "rgba(232,101,10,0.15)" : "rgba(255,255,255,0.06)", color: log.actorRole === "admin" ? "#E8650A" : "rgba(255,255,255,0.4)", borderRadius: 6, padding: "2px 8px", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                          {log.actorRole}
+                        </span>
+                      </td>
+                      <td style={{ padding: "12px 16px" }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "white", whiteSpace: "nowrap" }}>{log.action.replace(/_/g, " ")}</span>
+                      </td>
+                      <td style={{ padding: "12px 16px", fontSize: 11, color: "rgba(255,255,255,0.45)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {log.targetType} {log.targetId ? `(${log.targetId.substring(0,8)})` : ""}
+                      </td>
+                      <td style={{ padding: "12px 16px", fontSize: 11, color: "rgba(255,255,255,0.55)", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={typeof log.details === 'string' ? log.details : JSON.stringify(log.details)}>
+                        {typeof log.details === 'string' ? log.details : JSON.stringify(log.details)}
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredLogs.length === 0 && (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: "center", padding: 30, color: "rgba(255,255,255,0.3)", fontSize: 13 }}>
+                        No audit log activities matched your filters.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ padding: "14px 20px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>Showing {filteredLogs.length} of {logs.length} entries · Logs retained for 365 days</span>
+              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.2)" }}>All times in local time</span>
+            </div>
           </div>
-          <div style={{ padding: "14px 20px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>Showing {filteredLogs.length} of {MOCK_AUDIT_LOGS.length} entries · Logs retained for 365 days</span>
-            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.2)" }}>All times in IST (UTC+5:30)</span>
-          </div>
-        </div>
+        )}
       </div>
     </AdminLayout>
   );

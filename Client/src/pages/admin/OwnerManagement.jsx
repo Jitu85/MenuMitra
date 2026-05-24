@@ -1,16 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
-
-const MOCK_OWNERS = [
-  { id: "OWN001", businessName: "Sharma's Dhaba", ownerName: "Ramesh Sharma", businessType: "dhaba", email: "ramesh@sharma.com", phone: "9876543210", city: "Patna", state: "Bihar", joined: "2026-01-12", subscription: "active", expires: "2026-06-12", orders: 342, revenue: 68400, items: 28, tables: 12, fssai: "10012345678901", status: "active" },
-  { id: "OWN002", businessName: "Raj Hotel & Restaurant", ownerName: "Sunil Rajput", businessType: "hotel", email: "sunil@rajhotel.com", phone: "9812345678", city: "Jaipur", state: "Rajasthan", joined: "2026-02-03", subscription: "active", expires: "2026-07-03", orders: 891, revenue: 267300, items: 64, tables: 30, fssai: "10023456789012", status: "active" },
-  { id: "OWN003", businessName: "Chai Corner", ownerName: "Meena Devi", businessType: "tea_stall", email: "meena@chaicorner.com", phone: "9765432109", city: "Varanasi", state: "Uttar Pradesh", joined: "2026-01-28", subscription: "expired", expires: "2026-04-28", orders: 1203, revenue: 36090, items: 18, tables: 8, fssai: "", status: "active" },
-  { id: "OWN004", businessName: "Spice Garden Restaurant", ownerName: "Arjun Mehta", businessType: "restaurant", email: "arjun@spicegarden.com", phone: "9654321098", city: "Pune", state: "Maharashtra", joined: "2026-03-15", subscription: "active", expires: "2026-08-15", orders: 456, revenue: 136800, items: 52, tables: 20, fssai: "10034567890123", status: "active" },
-  { id: "OWN005", businessName: "Café Monsoon", ownerName: "Priya Nair", businessType: "cafe", email: "priya@cafemonsoon.com", phone: "9543210987", city: "Kochi", state: "Kerala", joined: "2026-02-20", subscription: "active", expires: "2026-07-20", orders: 678, revenue: 135600, items: 41, tables: 15, fssai: "10045678901234", status: "active" },
-  { id: "OWN006", businessName: "Gupta Sweet House", ownerName: "Deepak Gupta", businessType: "bakery", email: "deepak@guptasweets.com", phone: "9432109876", city: "Agra", state: "Uttar Pradesh", joined: "2026-04-01", subscription: "trial", expires: "2026-05-31", orders: 89, revenue: 22250, items: 35, tables: 6, fssai: "10056789012345", status: "active" },
-  { id: "OWN007", businessName: "Highway Dhaba 66", ownerName: "Harpreet Singh", businessType: "dhaba", email: "harpreet@hw66.com", phone: "9321098765", city: "Ludhiana", state: "Punjab", joined: "2026-01-05", subscription: "suspended", expires: "2026-02-05", orders: 2341, revenue: 468200, items: 33, tables: 25, fssai: "10067890123456", status: "suspended" },
-];
+import { getOwners, getOwnerDetails, updateOwnerStatus, overrideSubscription } from '../../services/adminService';
 
 const SUB_BADGE = {
   active: { bg: "rgba(45,106,79,0.15)", color: "#40916C", label: "Active" },
@@ -29,43 +20,93 @@ function Badge({ status }) {
 }
 
 export default function OwnerManagement() {
-  const [owners, setOwners] = useState(MOCK_OWNERS);
+  const [owners, setOwners] = useState([]);
   const [selectedOwner, setSelectedOwner] = useState(null);
+  const [detailedOwner, setDetailedOwner] = useState(null);
   const [searchQ, setSearchQ] = useState("");
   const [filterSub, setFilterSub] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
 
-  const filtered = owners.filter(o => {
-    const q = searchQ.toLowerCase();
-    const matchQ = !q || o.businessName.toLowerCase().includes(q) || o.ownerName.toLowerCase().includes(q) || o.email.toLowerCase().includes(q) || o.city.toLowerCase().includes(q);
-    const matchSub = filterSub === "all" || o.subscription === filterSub;
-    return matchQ && matchSub;
-  });
-
-  const handleStatusToggle = (owner) => {
-    setOwners(prev => prev.map(o => {
-      if (o.id === owner.id) {
-        const isAct = o.status === "active";
-        return {
-          ...o,
-          status: isAct ? "suspended" : "active",
-          subscription: isAct ? "suspended" : "active"
-        };
-      }
-      return o;
-    }));
-    toast.success(`Owner ${owner.businessName} status successfully updated!`);
-    if (selectedOwner?.id === owner.id) setSelectedOwner(null);
+  // Fetch owners list based on search and status
+  const fetchOwnersList = async () => {
+    try {
+      setLoading(true);
+      const params = {};
+      if (searchQ) params.search = searchQ;
+      if (filterSub !== "all") params.status = filterSub;
+      const data = await getOwners(params);
+      setOwners(data);
+    } catch (err) {
+      toast.error(err.message || "Failed to load owner accounts.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleExtendSub = (owner) => {
-    setOwners(prev => prev.map(o => {
-      if (o.id !== owner.id) return o;
-      const newExp = new Date(o.expires);
-      newExp.setDate(newExp.getDate() + 30);
-      return { ...o, subscription: "active", expires: newExp.toISOString().split("T")[0] };
-    }));
-    toast.success(`Subscription extended 30 days for ${owner.businessName}!`);
-    if (selectedOwner?.id === owner.id) setSelectedOwner(null);
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchOwnersList();
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQ, filterSub]);
+
+  // Load detailed owner data when an owner is selected
+  useEffect(() => {
+    if (!selectedOwner) {
+      setDetailedOwner(null);
+      return;
+    }
+
+    async function loadDetails() {
+      try {
+        setDetailLoading(true);
+        const data = await getOwnerDetails(selectedOwner.id);
+        setDetailedOwner(data);
+      } catch (err) {
+        toast.error("Failed to load details: " + err.message);
+        setSelectedOwner(null);
+      } finally {
+        setDetailLoading(false);
+      }
+    }
+    loadDetails();
+  }, [selectedOwner]);
+
+  const handleStatusToggle = async (owner) => {
+    try {
+      const nextActive = !owner.isActive;
+      await updateOwnerStatus(owner.id, nextActive);
+      toast.success(`Owner account ${nextActive ? 'activated' : 'suspended'} successfully!`);
+      fetchOwnersList();
+      if (selectedOwner?.id === owner.id) {
+        // Reload details if open
+        const updatedDetails = await getOwnerDetails(owner.id);
+        setDetailedOwner(updatedDetails);
+      }
+    } catch (err) {
+      toast.error("Failed to update status: " + err.message);
+    }
+  };
+
+  const handleExtendSub = async (owner) => {
+    try {
+      const currentExpiry = owner.subscriptionExpires ? new Date(owner.subscriptionExpires) : new Date();
+      // Add 30 days
+      const newExpiry = new Date(currentExpiry.getTime() + 30 * 24 * 60 * 60 * 1000);
+      
+      await overrideSubscription(owner.id, "active", newExpiry.toISOString());
+      toast.success(`Subscription manually extended 30 days for ${owner.businessName || 'Owner'}!`);
+      
+      fetchOwnersList();
+      if (selectedOwner?.id === owner.id) {
+        const updatedDetails = await getOwnerDetails(owner.id);
+        setDetailedOwner(updatedDetails);
+      }
+    } catch (err) {
+      toast.error("Failed to extend subscription: " + err.message);
+    }
   };
 
   return (
@@ -76,7 +117,9 @@ export default function OwnerManagement() {
           <div>
             <div style={{ marginBottom: 24 }}>
               <h1 style={{ fontFamily: "'Playfair Display',serif", fontSize: 30, fontWeight: 900, marginBottom: 4 }}>Owner Management</h1>
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>{owners.length} registered business owners · {owners.filter(o => o.subscription === "active").length} active subscriptions</p>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>
+                {owners.length} registered business owners · {owners.filter(o => o.subscriptionStatus === "active").length} active subscriptions
+              </p>
             </div>
 
             {/* Filters */}
@@ -94,43 +137,66 @@ export default function OwnerManagement() {
               </select>
             </div>
 
-            {/* Table */}
-            <div style={{ background: "#1E1E1E", borderRadius: 18, border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 780 }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", height: 44 }}>
-                      {["Business", "Owner", "City", "Joined", "Subscription", "Revenue", "Actions"].map(h => (
-                        <th key={h} style={{ padding: "13px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.2, textTransform: "uppercase" }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map(owner => (
-                      <tr key={owner.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                        <td style={{ padding: "13px 16px" }}>
-                          <div style={{ fontWeight: 700, fontSize: 13, color: "white", cursor: "pointer" }} onClick={() => setSelectedOwner(owner)}>{owner.businessName}</div>
-                          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 1 }}>{owner.id}</div>
-                        </td>
-                        <td style={{ padding: "13px 16px", fontSize: 12, color: "rgba(255,255,255,0.6)" }}>{owner.ownerName}</td>
-                        <td style={{ padding: "13px 16px", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>{owner.city}, {owner.state}</td>
-                        <td style={{ padding: "13px 16px", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{owner.joined}</td>
-                        <td style={{ padding: "13px 16px" }}><Badge status={owner.subscription} /></td>
-                        <td style={{ padding: "13px 16px", fontSize: 12, fontWeight: 700, color: "#C9920A" }}>₹{owner.revenue.toLocaleString()}</td>
-                        <td style={{ padding: "13px 16px" }}>
-                          <div style={{ display: "flex", gap: 6 }}>
-                            <button className="btn-admin-primary" style={{ padding: "5px 10px", fontSize: 11 }} onClick={() => setSelectedOwner(owner)}>View</button>
-                            <button className="btn-admin-primary" style={{ padding: "5px 10px", fontSize: 11, background: owner.status === "active" ? "#c0392b" : "#2d6a4f" }} onClick={() => handleStatusToggle(owner)}>
-                              {owner.status === "active" ? "Suspend" : "Activate"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* Table or Loader */}
+            {loading ? (
+              <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
+                <div className="spinner" style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid rgba(232,101,10,0.1)", borderTopColor: "#E8650A", animation: "spin 1s linear infinite" }} />
               </div>
-            </div>
+            ) : (
+              <div style={{ background: "#1E1E1E", borderRadius: 18, border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 780 }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", height: 44 }}>
+                        {["Business", "OwnerName", "City/State", "Joined On", "Subscription", "Account Status", "Actions"].map(h => (
+                          <th key={h} style={{ padding: "13px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.2, textTransform: "uppercase" }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {owners.map(owner => (
+                        <tr key={owner.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                          <td style={{ padding: "13px 16px" }}>
+                            <div style={{ fontWeight: 700, fontSize: 13, color: "white", cursor: "pointer" }} onClick={() => setSelectedOwner(owner)}>{owner.businessName}</div>
+                            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 1 }}>{owner.id}</div>
+                          </td>
+                          <td style={{ padding: "13px 16px", fontSize: 12, color: "rgba(255,255,255,0.6)" }}>{owner.ownerName}</td>
+                          <td style={{ padding: "13px 16px", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>{owner.city}, {owner.state}</td>
+                          <td style={{ padding: "13px 16px", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
+                            {new Date(owner.createdAt).toLocaleDateString()}
+                          </td>
+                          <td style={{ padding: "13px 16px" }}><Badge status={owner.subscriptionStatus} /></td>
+                          <td style={{ padding: "13px 16px" }}>
+                            <span style={{
+                              background: owner.isActive ? "rgba(45,106,79,0.12)" : "rgba(192,57,43,0.12)",
+                              color: owner.isActive ? "#40916C" : "#e74c3c",
+                              padding: "2px 8px", borderRadius: 6, fontSize: 10, fontWeight: 700, textTransform: "uppercase"
+                            }}>
+                              {owner.isActive ? "Active" : "Suspended"}
+                            </span>
+                          </td>
+                          <td style={{ padding: "13px 16px" }}>
+                            <div style={{ display: "flex", gap: 6 }}>
+                              <button className="btn-admin-primary" style={{ padding: "5px 10px", fontSize: 11 }} onClick={() => setSelectedOwner(owner)}>View</button>
+                              <button className="btn-admin-primary" style={{ padding: "5px 10px", fontSize: 11, background: owner.isActive ? "#c0392b" : "#2d6a4f" }} onClick={() => handleStatusToggle(owner)}>
+                                {owner.isActive ? "Suspend" : "Activate"}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {owners.length === 0 && (
+                        <tr>
+                          <td colSpan="7" style={{ textAlign: "center", padding: 30, color: "rgba(255,255,255,0.3)", fontSize: 13 }}>
+                            No merchant accounts found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div>
@@ -138,35 +204,49 @@ export default function OwnerManagement() {
               style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 20 }}>
               ← Back to Owner List
             </button>
-            <div style={{ background: "#1E1E1E", borderRadius: 18, padding: "28px", border: "1px solid rgba(255,255,255,0.06)", maxWidth: 680 }}>
-              <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, fontWeight: 900, marginBottom: 4 }}>{selectedOwner.businessName}</h2>
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 20 }}>Owner details and administrative actions.</div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
-                {[
-                  { label: "Owner Name", val: selectedOwner.ownerName },
-                  { label: "Email Address", val: selectedOwner.email },
-                  { label: "Mobile Number", val: selectedOwner.phone },
-                  { label: "Location", val: `${selectedOwner.city}, ${selectedOwner.state}` },
-                  { label: "Registration Date", val: selectedOwner.joined },
-                  { label: "GSTIN / FSSAI", val: selectedOwner.fssai || "Not Provided" },
-                  { label: "Total Orders", val: selectedOwner.orders },
-                  { label: "Platform Revenue", val: `₹${selectedOwner.revenue.toLocaleString()}` },
-                ].map((f, i) => (
-                  <div key={i} style={{ background: "rgba(255,255,255,0.02)", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.04)" }}>
-                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", textTransform: "uppercase" }}>{f.label}</div>
-                    <div style={{ fontSize: 13, fontWeight: "bold", color: "white", marginTop: 4 }}>{f.val}</div>
-                  </div>
-                ))}
+            
+            {detailLoading || !detailedOwner ? (
+              <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
+                <div className="spinner" style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid rgba(232,101,10,0.1)", borderTopColor: "#E8650A", animation: "spin 1s linear infinite" }} />
               </div>
+            ) : (
+              <div style={{ background: "#1E1E1E", borderRadius: 18, padding: "28px", border: "1px solid rgba(255,255,255,0.06)", maxWidth: 680 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                  <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, fontWeight: 900, marginBottom: 4 }}>{detailedOwner.businessName}</h2>
+                  <Badge status={detailedOwner.subscriptionStatus} />
+                </div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 20 }}>Owner details and administrative actions.</div>
 
-              <div style={{ display: "flex", gap: 10 }}>
-                <button className="btn-admin-primary" onClick={() => handleExtendSub(selectedOwner)}> Extend Sub (30 Days)</button>
-                <button className="btn-admin-primary" style={{ background: selectedOwner.status === "active" ? "#c0392b" : "#2d6a4f" }} onClick={() => handleStatusToggle(selectedOwner)}>
-                  {selectedOwner.status === "active" ? "Suspend Account" : "Activate Account"}
-                </button>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
+                  {[
+                    { label: "Owner Name", val: detailedOwner.ownerName },
+                    { label: "Email Address", val: detailedOwner.email },
+                    { label: "Mobile Number", val: detailedOwner.phone },
+                    { label: "Location", val: `${detailedOwner.city}, ${detailedOwner.state}` },
+                    { label: "Address Detail", val: detailedOwner.address || "Not Provided" },
+                    { label: "Pin Code", val: detailedOwner.pincode || "Not Provided" },
+                    { label: "Business Type", val: detailedOwner.businessType ? detailedOwner.businessType.toUpperCase() : "RESTURANT" },
+                    { label: "Registration Date", val: new Date(detailedOwner.createdAt).toLocaleDateString() },
+                    { label: "GSTIN", val: detailedOwner.gstin || "Not Provided" },
+                    { label: "FSSAI License", val: detailedOwner.fssaiLicense || "Not Provided" },
+                    { label: "Tables Count", val: detailedOwner.tableCount || 10 },
+                    { label: "Subscription Expiry", val: detailedOwner.subscriptionExpires ? new Date(detailedOwner.subscriptionExpires).toLocaleDateString() : "Expired / None" },
+                  ].map((f, i) => (
+                    <div key={i} style={{ background: "rgba(255,255,255,0.02)", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.04)" }}>
+                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", textTransform: "uppercase" }}>{f.label}</div>
+                      <div style={{ fontSize: 13, fontWeight: "bold", color: "white", marginTop: 4 }}>{f.val}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button className="btn-admin-primary" onClick={() => handleExtendSub(detailedOwner)}> Extend Sub (30 Days)</button>
+                  <button className="btn-admin-primary" style={{ background: detailedOwner.isActive ? "#c0392b" : "#2d6a4f" }} onClick={() => handleStatusToggle(detailedOwner)}>
+                    {detailedOwner.isActive ? "Suspend Account" : "Activate Account"}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>

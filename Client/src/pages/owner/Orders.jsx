@@ -2,22 +2,33 @@ import React, { useState, useEffect } from 'react';
 import OwnerLayout from '../../components/OwnerLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { io } from 'socket.io-client';
-import { useAuth } from '../../hooks/useAuth';
-
-const INIT_ORDERS = [
-  { id: "ORD-20260518-0042", table: "5", items: [{ name: "Dal Makhani", qty: 2, price: 180 }, { name: "Butter Naan", qty: 4, price: 40 }], total: 520, status: "paid", method: "razorpay", time: "14:32", date: "2026-05-18" },
-  { id: "ORD-20260518-0041", table: "3", items: [{ name: "Chicken Curry", qty: 1, price: 280 }, { name: "Tandoori Roti", qty: 3, price: 25 }], total: 355, status: "paid", method: "upi", time: "13:55", date: "2026-05-18" },
-  { id: "ORD-20260518-0039", table: "1", items: [{ name: "Paneer Tikka", qty: 1, price: 240 }], total: 240, status: "pending", method: "upi", time: "12:48", date: "2026-05-18" },
-];
+import { useAuthStore } from '../../store/authStore';
+import api from '../../services/api';
 
 export default function Orders() {
-  const { user } = useAuth();
-  const [orders, setOrders] = useState(INIT_ORDERS);
+  const { user } = useAuthStore();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    // Robustly strip '/api' suffix from API URL for the WebSocket connection
+    // 1. Fetch existing orders from database on load
+    async function loadOrders() {
+      try {
+        setLoading(true);
+        const res = await api.get('/orders');
+        setOrders(res.data || []);
+      } catch (e) {
+        console.error("Failed to load live orders list", e);
+        toast.error("❌ Failed to fetch live orders from database.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadOrders();
+
+    // 2. Setup Socket.io Real-Time connection
     const rawApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
     const socketUrl = rawApiUrl.replace(/\/api$/, '');
     const socket = io(socketUrl);
@@ -26,18 +37,39 @@ export default function Orders() {
       socket.emit('join_owner_room', user.id);
     }
 
-    socket.on('new_order', (newOrder) => {
-      setOrders(prev => [newOrder, ...prev]);
-      toast.success(`🎉 New Order Received! Table ${newOrder.table} - Total: ₹${newOrder.total}`, {
-        duration: 8000,
+    // Fixed event name from 'new_order' to match backend 'new_order_received'
+    socket.on('new_order_received', (newOrder) => {
+      // Map keys to match GET /orders schema exactly
+      const mappedOrder = {
+        id: newOrder.id,
+        orderNumber: newOrder.orderNumber,
+        tableNumber: newOrder.tableNumber,
+        customerName: newOrder.customerName || 'Guest',
+        totalAmount: newOrder.totalAmount,
+        paymentMethod: newOrder.paymentMethod || 'N/A',
+        paymentStatus: 'pending',
+        createdAt: newOrder.createdAt || new Date().toISOString(),
+        items: newOrder.items.map(i => ({
+          nameEn: i.nameEn,
+          qty: i.qty,
+          price: i.price,
+          totalPrice: i.qty * i.price
+        }))
+      };
+
+      setOrders(prev => [mappedOrder, ...prev]);
+      
+      toast.success(`🎉 New Order! Table ${newOrder.tableNumber} - Total: ₹${newOrder.totalAmount}`, {
+        duration: 9000,
         icon: '🔔'
       });
-      // Play ding sound
+
+      // Play alert chime
       try {
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-200.wav');
         audio.play();
       } catch (e) {
-        console.log('Audio playback blocked');
+        console.warn('Audio alert blocked by browser autoplay settings');
       }
     });
 
@@ -46,16 +78,26 @@ export default function Orders() {
     };
   }, [user]);
 
-  const updateStatus = (orderId, newStatus) => {
-    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-    toast.success(`Order ${orderId.slice(-6)} marked as ${newStatus}.`);
+  const updateStatus = async (orderId, newStatus) => {
+    try {
+      await api.put(`/orders/${orderId}/status`, { paymentStatus: newStatus });
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, paymentStatus: newStatus } : o));
+      toast.success(`✅ Order marked as ${newStatus} in database.`);
+    } catch (e) {
+      console.error(e);
+      toast.error("❌ Failed to update order status.");
+    }
   };
 
   const printReceipt = (order) => {
-    toast.success(`📤 Dispatching receipt of ORD-${order.id.slice(-6)} to thermal printer...`);
+    // Dynamically open pre-styled browser thermal receipt in a new tab for native thermal printing
+    const rawApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+    const printUrl = `${rawApiUrl}/print/receipt/${order.id}`;
+    window.open(printUrl, '_blank');
+    toast.success("📤 Dispatching receipt frame to browser print tab...");
   };
 
-  const filteredOrders = orders.filter(o => filter === "all" ? true : o.status === filter);
+  const filteredOrders = orders.filter(o => filter === "all" ? true : o.paymentStatus === filter);
 
   return (
     <OwnerLayout pageTitle="📦 Live Orders Counter">
@@ -78,64 +120,96 @@ export default function Orders() {
 
         {/* Orders Table/Grid */}
         <div style={{ background: "white", borderRadius: 18, border: "1px solid rgba(232,101,10,0.08)", overflow: "hidden" }}>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ borderBottom: "1px solid #f5ede5" }}>
-                  {["Order ID", "Table", "Time", "Items Count", "Total Price", "Payment", "Status", "Actions"].map(h => (
-                    <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "#bbb", textTransform: "uppercase", letterSpacing: 1 }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredOrders.map(o => (
-                  <React.Fragment key={o.id}>
-                    <tr className="table-row" style={{ borderBottom: "1px solid #f5ede5" }}>
-                      <td style={{ padding: "12px 16px", fontSize: 12, fontWeight: "bold" }}>
-                        <button onClick={() => setExpandedOrder(expandedOrder === o.id ? null : o.id)} style={{ background: "none", border: "none", color: "#E8650A", cursor: "pointer", fontWeight: "bold", marginRight: 8 }}>
-                          {expandedOrder === o.id ? "▼" : "▶"}
-                        </button>
-                        {o.id.slice(-6)}
-                      </td>
-                      <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: "bold" }}>Table {o.table}</td>
-                      <td style={{ padding: "12px 16px", fontSize: 12, color: "#555" }}>{o.time}</td>
-                      <td style={{ padding: "12px 16px", fontSize: 12, color: "#555" }}>{o.items.length} items</td>
-                      <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: "bold", color: "#E8650A" }}>₹{o.total}</td>
-                      <td style={{ padding: "12px 16px", fontSize: 11, textTransform: "uppercase", color: "#888" }}>{o.method}</td>
-                      <td style={{ padding: "12px 16px" }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6, color: o.status === "paid" ? "#2D6A4F" : "#E8650A", background: o.status === "paid" ? "rgba(45,106,79,0.1)" : "rgba(232,101,10,0.1)" }}>
-                          {o.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: "12px 16px" }}>
-                        <div style={{ display: "flex", gap: 6 }}>
-                          {o.status === "pending" && (
-                            <button onClick={() => updateStatus(o.id, "paid")} style={{ padding: "4px 8px", background: "#2D6A4F", color: "white", border: "none", borderRadius: 6, fontSize: 10, cursor: "pointer" }}>Mark Paid</button>
-                          )}
-                          <button onClick={() => printReceipt(o)} style={{ padding: "4px 8px", background: "#5B8DB8", color: "white", border: "none", borderRadius: 6, fontSize: 10, cursor: "pointer" }}>🖨️ Print</button>
-                        </div>
-                      </td>
-                    </tr>
-                    {expandedOrder === o.id && (
-                      <tr>
-                        <td colSpan={8} style={{ padding: "16px 28px", background: "#faf8f5" }}>
-                          <div style={{ fontSize: 12 }}>
-                            <div style={{ fontWeight: "bold", marginBottom: 8, color: "#1A1A1A" }}>Ordered Dishes:</div>
-                            {o.items.map((item, idx) => (
-                              <div key={idx} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px dashed #e8ddd4", maxWidth: 400 }}>
-                                <span>{item.name} x {item.qty}</span>
-                                <span style={{ fontWeight: "bold" }}>₹{item.qty * item.price}</span>
+          
+          {loading ? (
+            <div style={{ textAlign: "center", padding: "40px", color: "#bbb" }}>Loading active order book...</div>
+          ) : filteredOrders.length > 0 ? (
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid #f5ede5" }}>
+                    {["Order ID", "Table", "Time", "Items Count", "Total Price", "Payment", "Status", "Actions"].map(h => (
+                      <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 800, color: "#bbb", textTransform: "uppercase", letterSpacing: 1 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.map(o => {
+                    const dateVal = new Date(o.createdAt);
+                    const timeStr = dateVal.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    const itemsCount = o.items.reduce((sum, item) => sum + item.qty, 0);
+
+                    return (
+                      <React.Fragment key={o.id}>
+                        <tr className="table-row" style={{ borderBottom: "1px solid #f5ede5" }}>
+                          <td style={{ padding: "12px 16px", fontSize: 12, fontWeight: "bold" }}>
+                            <button onClick={() => setExpandedOrder(expandedOrder === o.id ? null : o.id)} style={{ background: "none", border: "none", color: "#E8650A", cursor: "pointer", fontWeight: "bold", marginRight: 8 }}>
+                              {expandedOrder === o.id ? "▼" : "▶"}
+                            </button>
+                            {o.orderNumber ? o.orderNumber.slice(-6) : o.id.slice(-6)}
+                          </td>
+                          <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: "bold" }}>Table {o.tableNumber}</td>
+                          <td style={{ padding: "12px 16px", fontSize: 12, color: "#666" }}>{timeStr}</td>
+                          <td style={{ padding: "12px 16px", fontSize: 12, color: "#666" }}>{itemsCount} item{itemsCount !== 1 ? "s" : ""}</td>
+                          <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 800, color: "#E8650A" }}>₹{o.totalAmount}</td>
+                          <td style={{ padding: "12px 16px" }}>
+                            <span style={{ fontSize: 9, fontWeight: 800, background: "#f5ede5", color: "#888", padding: "3px 6px", borderRadius: 5, textTransform: "uppercase" }}>
+                              {o.paymentMethod ? o.paymentMethod.replace('_', ' ') : 'CASH'}
+                            </span>
+                          </td>
+                          <td style={{ padding: "12px 16px" }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, background: o.paymentStatus === "paid" ? "rgba(45,106,79,0.12)" : "rgba(232,101,10,0.12)", color: o.paymentStatus === "paid" ? "#2D6A4F" : "#E8650A", borderRadius: 6, padding: "3px 8px" }}>
+                              {o.paymentStatus === "paid" ? "✓ Paid" : "⏳ Pending"}
+                            </span>
+                          </td>
+                          <td style={{ padding: "12px 16px" }}>
+                            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                              {o.paymentStatus === "pending" ? (
+                                <button className="action-btn" onClick={() => updateStatus(o.id, "paid")}
+                                  style={{ border: "none", background: "#E8650A", color: "white", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                                  Mark Paid
+                                </button>
+                              ) : (
+                                <button className="action-btn" onClick={() => updateStatus(o.id, "pending")}
+                                  style={{ border: "none", background: "rgba(232,101,10,0.06)", color: "#E8650A", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                                  Mark Unpaid
+                                </button>
+                              )}
+                              <button onClick={() => printReceipt(o)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14 }}>🖨️</button>
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* Collapsible Order Item Details */}
+                        {expandedOrder === o.id && (
+                          <tr>
+                            <td colSpan={8} style={{ padding: "14px 20px", background: "rgba(232,101,10,0.02)" }}>
+                              <div style={{ fontSize: 11, fontWeight: 800, color: "#E8650A", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>📋 Order Items Detail (Customer: {o.customerName})</div>
+                              <div style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 400 }}>
+                                {o.items.map((item, idx) => (
+                                  <div key={idx} style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                                    <span style={{ color: "#1A1A1A" }}>{item.qty}x {item.nameEn}</span>
+                                    <span style={{ fontWeight: "bold", color: "#666" }}>₹{(item.qty * item.price).toLocaleString()}</span>
+                                  </div>
+                                ))}
+                                {o.notes && (
+                                  <div style={{ marginTop: 8, padding: "8px 10px", background: "rgba(0,0,0,0.02)", borderLeft: "3.5px solid #C9920A", borderRadius: 4, fontSize: 11, color: "#666" }}>
+                                    <strong>Notes:</strong> {o.notes}
+                                  </div>
+                                )}
                               </div>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div style={{ textAlign: "center", padding: "40px", color: "#bbb" }}>No active checkouts found for this selection.</div>
+          )}
         </div>
       </div>
     </OwnerLayout>

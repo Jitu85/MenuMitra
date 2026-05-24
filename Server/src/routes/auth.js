@@ -132,8 +132,18 @@ const handleRegister = async (req, res, next) => {
       businessName: newOwner.business_name,
       slug: newOwner.unique_slug,
       subscriptionStatus: newOwner.subscription_status,
-      subscriptionExpires: newOwner.subscription_expires
+      subscriptionExpires: newOwner.subscription_expires,
+      ownerName: newOwner.owner_name,
+      email: newOwner.email,
+      phone: newOwner.phone,
+      address: newOwner.address,
+      city: newOwner.city,
+      state: newOwner.state,
+      pincode: newOwner.pincode,
+      tableCount: newOwner.table_count,
+      role: 'owner'
     };
+
 
     res.status(201).json({
       message: 'Owner registered successfully! 30-day free trial has been initiated.',
@@ -192,8 +202,17 @@ router.post('/login', async (req, res, next) => {
       slug: owner.unique_slug,
       subscriptionStatus: owner.subscription_status,
       subscriptionExpires: owner.subscription_expires,
+      ownerName: owner.owner_name,
+      email: owner.email,
+      phone: owner.phone,
+      address: owner.address,
+      city: owner.city,
+      state: owner.state,
+      pincode: owner.pincode,
+      tableCount: owner.table_count,
       role: 'owner'
     };
+
 
     res.json({
       message: 'Login successful!',

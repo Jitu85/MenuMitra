@@ -33,12 +33,15 @@ router.get('/stats', async (req, res, next) => {
     });
     const platformRevenue = revenueAggregate._sum.amount_paid || 0;
 
+    const totalOrders = await prisma.order.count();
+
     res.json({
       totalOwners,
       activeSubs,
       trialSubs,
       expiredSubs,
       platformRevenue,
+      totalOrders,
       developer: 'Abhijit Kumar Misra'
     });
   } catch (err) {

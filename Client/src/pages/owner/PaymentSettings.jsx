@@ -1,6 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import OwnerLayout from '../../components/OwnerLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import { useAuthStore } from '../../store/authStore';
+import api from '../../services/api';
 
 const inputStyle = {
   width: "100%",
@@ -16,17 +18,82 @@ const inputStyle = {
 };
 
 export default function PaymentSettings() {
+  const { user, updateProfileState } = useAuthStore();
   const [settings, setSettings] = useState({
-    upiId: "ramesh@upi",
+    upiId: "",
     paymentPref: "both",
     rzpKeyId: "",
     rzpKeySecret: "",
   });
 
+  const [loading, setLoading] = useState(false);
   const upiFileRef = useRef();
 
-  const handleSave = () => {
-    toast.success("✅ Payment settings saved successfully.");
+  useEffect(() => {
+    // 1. First, load values from Zustand auth cache
+    if (user) {
+      setSettings({
+        upiId: user.upiId || user.upi_id || "",
+        paymentPref: user.paymentMethodPref || user.payment_method_pref || "both",
+        rzpKeyId: user.razorpay_key_id || "",
+        rzpKeySecret: user.razorpay_key_secret || "",
+      });
+    }
+
+    // 2. Load fresh values from database
+    async function loadFreshPaymentSettings() {
+      try {
+        const res = await api.get('/owner/profile');
+        if (res.data) {
+          const d = res.data;
+          setSettings({
+            upiId: d.upi_id || "",
+            paymentPref: d.payment_method_pref || "both",
+            rzpKeyId: d.razorpay_key_id || "",
+            rzpKeySecret: d.razorpay_key_secret || "",
+          });
+          updateProfileState({
+            ...user,
+            upiId: d.upi_id,
+            paymentMethodPref: d.payment_method_pref,
+            razorpay_key_id: d.razorpay_key_id,
+            razorpay_key_secret: d.razorpay_key_secret,
+          });
+        }
+      } catch (e) {
+        console.error("Failed to load payment credentials from backend", e);
+      }
+    }
+    loadFreshPaymentSettings();
+  }, [user, updateProfileState]);
+
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      const res = await api.put('/owner/profile', {
+        upiId: settings.upiId,
+        paymentMethodPref: settings.paymentPref,
+        razorpayKeyId: settings.rzpKeyId,
+        razorpayKeySecret: settings.rzpKeySecret,
+      });
+
+      if (res.data) {
+        toast.success("✅ Payment credentials successfully saved in database!");
+        // Update local session state
+        updateProfileState({
+          ...user,
+          upiId: settings.upiId,
+          paymentMethodPref: settings.paymentPref,
+          razorpay_key_id: settings.rzpKeyId,
+          razorpay_key_secret: settings.rzpKeySecret,
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error(e.message || "❌ Failed to save payment credentials.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleQRUpload = () => {
@@ -45,7 +112,7 @@ export default function PaymentSettings() {
         {/* Payment method preference */}
         <div className="card" style={{ padding: "24px", marginBottom: 18 }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: "#E8650A", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 16 }}>Payment Method Preference</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 8 }}>
+          <div style={{ display: "flex", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 8 }}>
             {[
               { v: "upi_qr", icon: "📱", label: "UPI QR Only", desc: "Show your UPI QR image to customers." },
               { v: "razorpay", icon: "💳", label: "Razorpay Only", desc: "Live gateway — cards, UPI, wallets." },
@@ -103,8 +170,8 @@ export default function PaymentSettings() {
           </div>
         </div>
 
-        <button className="btn-primary" style={{ width: "100%", padding: 15, fontSize: 15 }} onClick={handleSave}>
-          💾 Save Payment Settings
+        <button className="btn-primary" style={{ width: "100%", padding: 15, fontSize: 15 }} onClick={handleSave} disabled={loading}>
+          {loading ? "💾 Saving Credentials..." : "💾 Save Payment Settings"}
         </button>
       </div>
     </OwnerLayout>

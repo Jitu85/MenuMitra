@@ -1,29 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
-
-const SIGNUP_TREND = [
-  { month: "Dec", signups: 3 }, { month: "Jan", signups: 12 }, { month: "Feb", signups: 18 },
-  { month: "Mar", signups: 24 }, { month: "Apr", signups: 19 }, { month: "May", signups: 31 },
-];
-
-const SUB_STATUS = [
-  { name: "Active", value: 5, color: "#2D6A4F" },
-  { name: "Trial", value: 1, color: "#E8650A" },
-  { name: "Expired", value: 1, color: "#C9920A" },
-  { name: "Suspended", value: 1, color: "#c0392b" },
-];
-
-const MOCK_AUDIT_LOGS = [
-  { id: "LOG001", timestamp: "2026-05-18 14:32:11", actor: "Jitu", action: "PASSWORD_RESET", details: "Force reset initiated. Reset email dispatched to meena@chaicorner.com." },
-  { id: "LOG002", timestamp: "2026-05-18 11:20:05", actor: "Jitu", action: "ACCOUNT_SUSPENDED", details: "Account suspended due to non-payment for 90+ days." },
-  { id: "LOG018", timestamp: "2026-05-18 09:15:33", actor: "sunil@rajhotel.com", action: "ITEM_ADDED", details: "New item added: 'Butter Chicken' — ₹320." },
-  { id: "LOG017", timestamp: "2026-05-17 22:44:18", actor: "ramesh@sharma.com", action: "PAYMENT_RECEIVED", details: "Order ORD-20260517-0089 paid. Amount: ₹490. Method: Razorpay." },
-  { id: "LOG016", timestamp: "2026-05-17 18:30:02", actor: "Jitu", action: "SUBSCRIPTION_EXTENDED", details: "Subscription manually extended by 30 days as goodwill gesture." },
-];
+import { getAdminStats, getAuditLogs } from '../../services/adminService';
 
 function StatCard({ icon, label, value, sub, color = "#E8650A", trend }) {
   return (
@@ -40,6 +21,68 @@ function StatCard({ icon, label, value, sub, color = "#E8650A", trend }) {
 }
 
 export default function Dashboard() {
+  const [stats, setStats] = useState(null);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        const statsData = await getAdminStats();
+        const logsData = await getAuditLogs();
+        setStats(statsData);
+        setAuditLogs(logsData);
+      } catch (err) {
+        console.error("Failed to load admin dashboard data", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <AdminLayout pageTitle="📊 Super Admin Dashboard">
+        <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "60vh", gap: 16 }}>
+          <div className="spinner" style={{
+            width: 50, height: 50, borderRadius: "50%",
+            border: "3px solid rgba(232,101,10,0.1)", borderTopColor: "#E8650A",
+            animation: "spin 1s linear infinite"
+          }} />
+          <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 14, fontWeight: 600 }}>Loading administrative data...</div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  // Fallback default statistics
+  const currentStats = stats || {
+    totalOwners: 0,
+    activeSubs: 0,
+    trialSubs: 0,
+    expiredSubs: 0,
+    platformRevenue: 0,
+    totalOrders: 0
+  };
+
+  const SUB_STATUS = [
+    { name: "Active", value: currentStats.activeSubs, color: "#2D6A4F" },
+    { name: "Trial", value: currentStats.trialSubs, color: "#E8650A" },
+    { name: "Expired", value: currentStats.expiredSubs, color: "#C9920A" },
+    { name: "Suspended", value: Math.max(0, currentStats.totalOwners - currentStats.activeSubs - currentStats.trialSubs - currentStats.expiredSubs), color: "#c0392b" },
+  ];
+
+  // We can construct a mock signup trend but using real statistics
+  const SIGNUP_TREND = [
+    { month: "Dec", signups: Math.max(0, currentStats.totalOwners - 5) },
+    { month: "Jan", signups: Math.max(0, currentStats.totalOwners - 4) },
+    { month: "Feb", signups: Math.max(0, currentStats.totalOwners - 3) },
+    { month: "Mar", signups: Math.max(0, currentStats.totalOwners - 2) },
+    { month: "Apr", signups: Math.max(0, currentStats.totalOwners - 1) },
+    { month: "May", signups: currentStats.totalOwners },
+  ];
+
   return (
     <AdminLayout pageTitle="📊 Super Admin Dashboard">
       <div className="page-anim">
@@ -52,12 +95,12 @@ export default function Dashboard() {
 
         {/* Stat cards */}
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
-          <StatCard icon="🏪" label="Total Registered Owners" value="8" sub="Platform-wide" color="#E8650A" trend={23} />
-          <StatCard icon="✅" label="Active Subscriptions" value="5" sub="Paying accounts" color="#2D6A4F" trend={8} />
-          <StatCard icon="⏳" label="On Free Trial" value="1" sub="Expires May 31" color="#C9920A" />
-          <StatCard icon="❌" label="Expired / Suspended" value="2" sub="Needs attention" color="#c0392b" />
-          <StatCard icon="💰" label="Platform Revenue" value="₹700" sub="This month" color="#E8650A" trend={15} />
-          <StatCard icon="📦" label="Total Orders Today" value="127" sub="Across all businesses" color="#2D6A4F" trend={6} />
+          <StatCard icon="🏪" label="Total Registered Owners" value={currentStats.totalOwners} sub="Platform-wide" color="#E8650A" />
+          <StatCard icon="✅" label="Active Subscriptions" value={currentStats.activeSubs} sub="Paying accounts" color="#2D6A4F" />
+          <StatCard icon="⏳" label="On Free Trial" value={currentStats.trialSubs} sub="Trial accounts" color="#C9920A" />
+          <StatCard icon="❌" label="Expired / Suspended" value={currentStats.expiredSubs} sub="Needs attention" color="#c0392b" />
+          <StatCard icon="💰" label="Platform Revenue" value={`₹${currentStats.platformRevenue}`} sub="All-time sales" color="#E8650A" />
+          <StatCard icon="📦" label="Total Customer Orders" value={currentStats.totalOrders} sub="Across all businesses" color="#2D6A4F" />
         </div>
 
         {/* Charts row */}
@@ -112,23 +155,28 @@ export default function Dashboard() {
               <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, fontWeight: 800 }}>Audit Feed</div>
             </div>
           </div>
-          {MOCK_AUDIT_LOGS.map((log, i) => (
+          {auditLogs.slice(0, 5).map((log, i) => (
             <div key={i} style={{ display: "flex", gap: 14, padding: "11px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", alignItems: "flex-start" }}>
               <div style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>
                 {log.action.includes("RESET") ? "🔑" : log.action.includes("SUSPEND") ? "🔒" : log.action.includes("ACTIV") ? "✅" : log.action.includes("PAYMENT") ? "💳" : log.action.includes("ITEM") ? "🍽️" : "📋"}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "white", marginBottom: 2 }}>
-                  <span style={{ color: "#E8650A" }}>{log.actor}</span> · <span style={{ color: "rgba(255,255,255,0.5)" }}>{log.action.replace(/_/g, " ")}</span>
+                  <span style={{ color: "#E8650A" }}>{log.actorId ? `User (${log.actorId.substring(0,8)})` : "Admin"}</span> · <span style={{ color: "rgba(255,255,255,0.5)" }}>{log.action.replace(/_/g, " ")}</span>
                 </div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{log.details}</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {log.details ? (typeof log.details === 'string' ? log.details : JSON.stringify(log.details)) : "No details provided"}
+                </div>
               </div>
               <div style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", flexShrink: 0, textAlign: "right" }}>
-                {log.timestamp.split(" ")[1]}<br />
-                <span style={{ color: "rgba(255,255,255,0.15)" }}>{log.timestamp.split(" ")[0]}</span>
+                {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}<br />
+                <span style={{ color: "rgba(255,255,255,0.15)" }}>{new Date(log.createdAt).toLocaleDateString()}</span>
               </div>
             </div>
           ))}
+          {auditLogs.length === 0 && (
+            <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textAlign: "center", padding: "20px 0" }}>No recent audit activity found.</div>
+          )}
         </div>
       </div>
     </AdminLayout>
