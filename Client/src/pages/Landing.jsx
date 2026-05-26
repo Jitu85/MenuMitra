@@ -70,7 +70,16 @@ export default function Landing() {
   const t = content[lang];
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#0F0F0F", fontFamily: "'DM Sans', sans-serif", color: "white", overflowX: "hidden" }}>
+    <div style={{ 
+      minHeight: "100vh", 
+      backgroundImage: "linear-gradient(rgba(15, 15, 15, 0.82), rgba(15, 15, 15, 0.90)), url('/Background.jpg')",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundAttachment: "fixed",
+      fontFamily: "'DM Sans', sans-serif", 
+      color: "white", 
+      overflowX: "hidden" 
+    }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,600&family=DM+Sans:wght@300;400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

@@ -9,11 +9,11 @@ export default function OwnerLayout({ children, pageTitle }) {
   const navigate = useNavigate();
 
   // Fallback info if user is not fully loaded
-  const businessName = user?.businessName || "Sharma's Dhaba";
-  const city = user?.city || "Patna";
-  const state = user?.state || "Bihar";
-  const slug = user?.slug || "sharmas-dhaba-patna";
-  const subscriptionExpires = user?.subscriptionExpires || "2026-06-12";
+  const businessName = user?.businessName || user?.business_name || "My Restaurant Outlet";
+  const city = user?.city || "";
+  const state = user?.state || "";
+  const slug = user?.slug || user?.unique_slug || "";
+  const subscriptionExpires = user?.subscriptionExpires || user?.subscription_expires || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
   const daysLeft = Math.max(0, Math.ceil((new Date(subscriptionExpires) - new Date()) / (1000 * 60 * 60 * 24)));
 
@@ -128,7 +128,15 @@ export default function OwnerLayout({ children, pageTitle }) {
           to { opacity: 1; }
         }
 
+        .mobile-close-btn {
+          display: none !important;
+        }
+        
         @media (max-width: 768px) {
+          .mobile-close-btn {
+            display: block !important;
+          }
+          
           .hamburger-btn {
             display: block !important;
           }
@@ -177,21 +185,29 @@ export default function OwnerLayout({ children, pageTitle }) {
         overflow: "hidden", position: "sticky", top: 0, height: "100vh", zIndex: 100
       }}>
         {/* Logo */}
-        <div style={{ padding: "20px 16px 14px", borderBottom: "1px solid #f0e8df", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #E8650A, #C9920A)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>🍽️</div>
-          {(sidebarOpen || mobileSidebarOpen) && (
-            <div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 16, color: "#1A1A1A", whiteSpace: "nowrap" }}>MenuMitra</div>
-              <div style={{ fontSize: 8, color: "#E8650A", fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Owner Portal</div>
-            </div>
-          )}
+        <div style={{ padding: "20px 16px 14px", borderBottom: "1px solid #f0e8df", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #E8650A, #C9920A)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>🍽️</div>
+            {(sidebarOpen || mobileSidebarOpen) && (
+              <div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 16, color: "#1A1A1A", whiteSpace: "nowrap" }}>MenuMitra</div>
+                <div style={{ fontSize: 8, color: "#E8650A", fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Owner Portal</div>
+              </div>
+            )}
+          </div>
+          {/* Mobile close button */}
+          <button className="mobile-close-btn" onClick={() => setMobileSidebarOpen(false)} style={{
+            background: "none", border: "none", fontSize: "20px", color: "#666", cursor: "pointer", display: "none", padding: "4px 8px"
+          }}>✕</button>
         </div>
 
         {/* Business Info Banner */}
         {(sidebarOpen || mobileSidebarOpen) && (
           <div style={{ margin: "10px 12px", background: "linear-gradient(135deg, rgba(232, 101, 10, 0.08), rgba(201, 146, 10, 0.06))", border: "1px solid rgba(232, 101, 10, 0.15)", borderRadius: 12, padding: "10px 12px" }}>
             <div style={{ fontSize: 12, fontWeight: 800, color: "#1A1A1A", marginBottom: 1 }}>{businessName}</div>
-            <div style={{ fontSize: 10, color: "#E8650A", fontWeight: 600, marginBottom: 4 }}>{city}, {state}</div>
+            <div style={{ fontSize: 10, color: "#E8650A", fontWeight: 600, marginBottom: 4 }}>
+              {city && state ? `${city}, ${state}` : city || state || "Location Not Set"}
+            </div>
             <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
               <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#2D6A4F" }}/>
               <span style={{ fontSize: 10, color: "#2D6A4F", fontWeight: 700 }}>Active · {daysLeft} days left</span>

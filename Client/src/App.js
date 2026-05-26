@@ -29,13 +29,13 @@ import PasswordResets from './pages/admin/PasswordResets';
 
 // ── Route guards ──────────────────────────────────────
 function OwnerRoute({ children }) {
-  const { user } = useAuth();
-  return user?.role === 'owner' ? children : <Navigate to='/login' replace />;
+  const { isOwner } = useAuth();
+  return isOwner ? children : <Navigate to='/login' replace />;
 }
 
 function AdminRoute({ children }) {
-  const { user } = useAuth();
-  return user?.role === 'admin' ? children : <Navigate to='/admin/login' replace />;
+  const { isAdmin } = useAuth();
+  return isAdmin ? children : <Navigate to='/admin/login' replace />;
 }
 
 export default function App() {

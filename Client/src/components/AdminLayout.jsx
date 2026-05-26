@@ -99,7 +99,15 @@ export default function AdminLayout({ children, pageTitle }) {
           to { opacity: 1; }
         }
 
+        .mobile-close-btn {
+          display: none !important;
+        }
+
         @media (max-width: 768px) {
+          .mobile-close-btn {
+            display: block !important;
+          }
+          
           .hamburger-btn {
             display: block !important;
           }
@@ -144,14 +152,20 @@ export default function AdminLayout({ children, pageTitle }) {
         overflow: "hidden", position: "sticky", top: 0, height: "100vh", zIndex: 100
       }}>
         {/* Logo */}
-        <div style={{ padding: "22px 18px 16px", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #E8650A, #C9920A)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>🍽️</div>
-          {(sidebarOpen || mobileSidebarOpen) && (
-            <div style={{ overflow: "hidden" }}>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 16, color: "white", whiteSpace: "nowrap" }}>MenuMitra</div>
-              <div style={{ fontSize: 8, color: "#E8650A", fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Admin Panel</div>
-            </div>
-          )}
+        <div style={{ padding: "22px 18px 16px", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #E8650A, #C9920A)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>🍽️</div>
+            {(sidebarOpen || mobileSidebarOpen) && (
+              <div style={{ overflow: "hidden" }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 16, color: "white", whiteSpace: "nowrap" }}>MenuMitra</div>
+                <div style={{ fontSize: 8, color: "#E8650A", fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Admin Panel</div>
+              </div>
+            )}
+          </div>
+          {/* Mobile close button */}
+          <button className="mobile-close-btn" onClick={() => setMobileSidebarOpen(false)} style={{
+            background: "none", border: "none", fontSize: "20px", color: "rgba(255,255,255,0.6)", cursor: "pointer", display: "none", padding: "4px 8px"
+          }}>✕</button>
         </div>
 
         {/* Super Admin Info */}

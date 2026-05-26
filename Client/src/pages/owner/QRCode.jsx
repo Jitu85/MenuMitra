@@ -5,8 +5,8 @@ import { useAuth } from '../../hooks/useAuth';
 
 export default function QRCodePage() {
   const { user } = useAuth();
-  const slug = user?.slug || "sharmas-dhaba-patna";
-  const businessName = user?.businessName || "Sharma's Dhaba";
+  const slug = user?.slug || user?.unique_slug || "";
+  const businessName = user?.businessName || user?.business_name || "My Restaurant Outlet";
   const menuUrl = `https://menumitra.in/menu/${slug}`;
 
   const copyLink = () => {

@@ -34,3 +34,8 @@ export const initiatePasswordReset = async (email) => {
   const res = await api.post('/auth/forgot-password', { email });
   return res.data;
 };
+
+export const deleteOwner = async (id) => {
+  const res = await api.delete(`/admin/owners/${id}`);
+  return res.data;
+};

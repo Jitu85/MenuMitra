@@ -2,7 +2,15 @@ import { create } from 'zustand';
 import api from '../services/api';
 
 export const useAuthStore = create((set, get) => ({
-  user: null,
+  user: (() => {
+    try {
+      const storedProfile = localStorage.getItem('menumitra_profile');
+      return storedProfile ? JSON.parse(storedProfile) : null;
+    } catch (e) {
+      console.error('Failed to parse cached authentication profile in store creation', e);
+      return null;
+    }
+  })(),
   token: localStorage.getItem('menumitra_token') || null,
   role: localStorage.getItem('menumitra_role') || null,
   loading: false,

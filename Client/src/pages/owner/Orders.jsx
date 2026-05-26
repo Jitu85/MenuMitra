@@ -73,6 +73,15 @@ export default function Orders() {
       }
     });
 
+    // Listen for real-time payment confirmations
+    socket.on('order_payment_update', (data) => {
+      setOrders(prev => prev.map(o => o.id === data.id ? { ...o, paymentStatus: data.paymentStatus, paymentMethod: data.paymentMethod } : o));
+      toast.success(`💳 Order ${data.orderNumber ? data.orderNumber.slice(-6) : data.id.slice(-6)} paid successfully via ${data.paymentMethod.replace('_', ' ').toUpperCase()}!`, {
+        duration: 8000,
+        icon: '✅'
+      });
+    });
+
     return () => {
       socket.disconnect();
     };

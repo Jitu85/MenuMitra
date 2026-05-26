@@ -65,7 +65,8 @@ export default function PaymentSettings() {
       }
     }
     loadFreshPaymentSettings();
-  }, [user, updateProfileState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSave = async () => {
     try {

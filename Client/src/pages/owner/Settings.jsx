@@ -94,7 +94,8 @@ export default function Settings() {
       }
     }
     loadFreshProfile();
-  }, [user, updateProfileState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleProfileSave = async () => {
     if (!profile.businessName.trim() || !profile.ownerName.trim() || !profile.phone.trim()) {

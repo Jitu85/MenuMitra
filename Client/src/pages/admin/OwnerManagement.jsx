@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
-import { getOwners, getOwnerDetails, updateOwnerStatus, overrideSubscription } from '../../services/adminService';
+import { getOwners, getOwnerDetails, updateOwnerStatus, overrideSubscription, deleteOwner } from '../../services/adminService';
 
 const SUB_BADGE = {
   active: { bg: "rgba(45,106,79,0.15)", color: "#40916C", label: "Active" },
@@ -109,6 +109,21 @@ export default function OwnerManagement() {
     }
   };
 
+  const handleDeleteOwner = async (owner) => {
+    if (!window.confirm(`⚠️ Are you absolutely sure you want to delete the merchant account "${owner.businessName || 'this business'}"?\n\nThis will permanently erase their categories, menu items, order history, and active subscriptions from the Supabase database.\n\nThis action CANNOT be undone!`)) {
+      return;
+    }
+
+    try {
+      await deleteOwner(owner.id);
+      toast.success("🗑️ Merchant account successfully deleted!");
+      setSelectedOwner(null);
+      fetchOwnersList();
+    } catch (err) {
+      toast.error("Failed to delete merchant account: " + err.message);
+    }
+  };
+
   return (
     <AdminLayout pageTitle="🏪 Owner Management">
       <Toaster position="top-center" />
@@ -181,6 +196,9 @@ export default function OwnerManagement() {
                               <button className="btn-admin-primary" style={{ padding: "5px 10px", fontSize: 11, background: owner.isActive ? "#c0392b" : "#2d6a4f" }} onClick={() => handleStatusToggle(owner)}>
                                 {owner.isActive ? "Suspend" : "Activate"}
                               </button>
+                              <button className="btn-admin-primary" style={{ padding: "5px 10px", fontSize: 11, background: "#8e1b1b" }} onClick={() => handleDeleteOwner(owner)}>
+                                Delete
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -243,6 +261,9 @@ export default function OwnerManagement() {
                   <button className="btn-admin-primary" onClick={() => handleExtendSub(detailedOwner)}> Extend Sub (30 Days)</button>
                   <button className="btn-admin-primary" style={{ background: detailedOwner.isActive ? "#c0392b" : "#2d6a4f" }} onClick={() => handleStatusToggle(detailedOwner)}>
                     {detailedOwner.isActive ? "Suspend Account" : "Activate Account"}
+                  </button>
+                  <button className="btn-admin-primary" style={{ background: "#8e1b1b" }} onClick={() => handleDeleteOwner(detailedOwner)}>
+                    Delete Account
                   </button>
                 </div>
               </div>

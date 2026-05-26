@@ -68,10 +68,10 @@ router.get('/owners', async (req, res, next) => {
     }
     if (search) {
       filter.OR = [
-        { business_name: { contains: search } },
-        { owner_name: { contains: search } },
-        { email: { contains: search } },
-        { phone: { contains: search } }
+        { business_name: { contains: search, mode: 'insensitive' } },
+        { owner_name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } }
       ];
     }
 
@@ -230,6 +230,43 @@ router.put('/owners/:id/override-subscription', async (req, res, next) => {
     ]);
 
     res.json({ message: 'Subscription parameters updated successfully by administrator!' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Delete merchant/owner account cascadingly
+router.delete('/owners/:id', async (req, res, next) => {
+  const prisma = req.app.get('prisma');
+  try {
+    const { id } = req.params;
+
+    // Check if owner exists
+    const owner = await prisma.owner.findUnique({
+      where: { id }
+    });
+
+    if (!owner) {
+      return res.status(404).json({ message: 'Merchant account not found.' });
+    }
+
+    // Cascading delete using transaction
+    await prisma.$transaction([
+      prisma.order.deleteMany({ where: { owner_id: id } }),
+      prisma.owner.delete({ where: { id } }),
+      prisma.auditLog.create({
+        data: {
+          actor_id: req.user.id,
+          actor_role: 'admin',
+          action: 'DELETE_ACCOUNT',
+          target_type: 'owner',
+          target_id: id,
+          details: JSON.stringify({ message: `Admin ${req.user.login_id} deleted merchant account: ${owner.business_name} (${owner.owner_name})` })
+        }
+      })
+    ]);
+
+    res.json({ message: 'Merchant account and all associated data successfully deleted!' });
   } catch (err) {
     next(err);
   }
