@@ -299,7 +299,7 @@ export default function Landing() {
       </header>
 
       {/* How it works */}
-      <section className="section-padding" style={{ padding: "80px 40px", background: "#080808", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <section className="section-padding" style={{ padding: "80px 40px", background: "rgba(10, 10, 10, 0.4)", backdropFilter: "blur(4px)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "36px", fontWeight: 900, textAlign: "center", marginBottom: "48px" }}>
             {t.howItWorks}
@@ -342,7 +342,7 @@ export default function Landing() {
       </section>
 
       {/* Subscription Plans */}
-      <section className="section-padding" style={{ padding: "80px 40px", background: "#080808", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <section className="section-padding" style={{ padding: "80px 40px", background: "rgba(10, 10, 10, 0.4)", backdropFilter: "blur(4px)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "36px", fontWeight: 900, textAlign: "center", marginBottom: "48px" }}>
             {t.pricingTitle}
