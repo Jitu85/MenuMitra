@@ -236,20 +236,52 @@ export default function Landing() {
                 <span style={{ fontSize: 13, fontWeight: 700 }}>Sharma's Dhaba</span>
                 <span style={{ background: "rgba(232,101,10,0.15)", color: "#E8650A", fontSize: 9, padding: "2px 6px", borderRadius: 4, fontWeight: 800 }}>हिंदी</span>
               </div>
-              <div style={{ background: "rgba(255,255,255,0.03)", padding: 12, borderRadius: 12, border: "1px solid rgba(255,255,255,0.05)" }}>
-                <div style={{ fontSize: 12, color: "#E8650A", fontWeight: 700, marginBottom: 4 }}>🔥 Popular Dishes</div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
+              <div style={{ background: "rgba(255,255,255,0.03)", padding: 12, borderRadius: 12, border: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ fontSize: 12, color: "#E8650A", fontWeight: 700, marginBottom: 2 }}>🔥 Popular Dishes</div>
+                
+                {/* Item 1: Dal Makhani */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 8, borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 700 }}>Dal Makhani (दाल मखनी)</div>
                     <div style={{ fontSize: 10, color: "#888" }}>₹180 · Veg</div>
                   </div>
-                  <button style={{ background: "#E8650A", border: "none", color: "white", padding: "4px 10px", borderRadius: 6, fontSize: 9, fontWeight: 800 }}>ADD</button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(232, 101, 10, 0.15)", borderRadius: 15, padding: "2px 8px", border: "1px solid rgba(232, 101, 10, 0.4)" }}>
+                    <span style={{ fontSize: 10, color: "#E8650A", fontWeight: "bold", cursor: "pointer" }}>−</span>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: "white" }}>1</span>
+                    <span style={{ fontSize: 10, color: "#E8650A", fontWeight: "bold", cursor: "pointer" }}>+</span>
+                  </div>
+                </div>
+
+                {/* Item 2: Paneer Butter Masala */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 8, borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700 }}>Paneer Butter (पनीर बटर)</div>
+                    <div style={{ fontSize: 10, color: "#888" }}>₹220 · Veg</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(232, 101, 10, 0.15)", borderRadius: 15, padding: "2px 8px", border: "1px solid rgba(232, 101, 10, 0.4)" }}>
+                    <span style={{ fontSize: 10, color: "#E8650A", fontWeight: "bold", cursor: "pointer" }}>−</span>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: "white" }}>1</span>
+                    <span style={{ fontSize: 10, color: "#E8650A", fontWeight: "bold", cursor: "pointer" }}>+</span>
+                  </div>
+                </div>
+
+                {/* Item 3: Butter Naan */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700 }}>Butter Naan (बटर नान)</div>
+                    <div style={{ fontSize: 10, color: "#888" }}>₹40 · Veg</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(232, 101, 10, 0.15)", borderRadius: 15, padding: "2px 8px", border: "1px solid rgba(232, 101, 10, 0.4)" }}>
+                    <span style={{ fontSize: 10, color: "#E8650A", fontWeight: "bold", cursor: "pointer" }}>−</span>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: "white" }}>2</span>
+                    <span style={{ fontSize: 10, color: "#E8650A", fontWeight: "bold", cursor: "pointer" }}>+</span>
+                  </div>
                 </div>
               </div>
               <div style={{ background: "rgba(255,255,255,0.03)", padding: 12, borderRadius: 12, border: "1px solid rgba(255,255,255,0.05)", marginTop: "auto" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 6 }}>
-                  <span>Total (1 item)</span>
-                  <span style={{ fontWeight: 700 }}>₹180</span>
+                  <span>Total (4 items)</span>
+                  <span style={{ fontWeight: 700 }}>₹480</span>
                 </div>
                 <button style={{ width: "100%", background: "linear-gradient(135deg, #E8650A, #C9920A)", border: "none", color: "white", padding: 8, borderRadius: 8, fontSize: 11, fontWeight: 800 }}>Confirm Order & Pay</button>
               </div>
