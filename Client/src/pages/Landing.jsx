@@ -102,6 +102,17 @@ export default function Landing() {
           background: rgba(232, 101, 10, 0.05);
           color: #E8650A;
         }
+        .nav-outline-btn {
+          transition: all 0.3s ease;
+          border: 1.5px solid rgba(0, 0, 0, 0.15) !important;
+          background: transparent;
+          color: #0F0F0F !important;
+        }
+        .nav-outline-btn:hover {
+          border-color: #0F0F0F !important;
+          background: rgba(0, 0, 0, 0.06) !important;
+          color: #0F0F0F !important;
+        }
         .card {
           background: #1A1A1A;
           border: 1px solid rgba(255, 255, 255, 0.06);
@@ -183,23 +194,23 @@ export default function Landing() {
       `}</style>
 
       {/* Navigation */}
-      <nav className="nav-container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 40px", borderBottom: "1px solid rgba(255, 255, 255, 0.08)", background: "rgba(15, 15, 15, 0.8)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 100 }}>
+      <nav className="nav-container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 40px", borderBottom: "1px solid rgba(0, 0, 0, 0.12)", background: "#857f77", position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: "28px" }}>🍽️</span>
           <div>
-            <span className="nav-logo-text" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "24px", color: "white" }}>MenuMitra</span>
-            <div style={{ fontSize: "8px", color: "#E8650A", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Scan · Order · Pay</div>
+            <span className="nav-logo-text" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "24px", color: "#0F0F0F" }}>MenuMitra</span>
+            <div style={{ fontSize: "8px", color: "#8B4000", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Scan · Order · Pay</div>
           </div>
         </div>
 
         <div className="nav-actions" style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <button onClick={() => setLang(lang === 'en' ? 'hi' : 'en')} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "white", padding: "6px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+          <button onClick={() => setLang(lang === 'en' ? 'hi' : 'en')} style={{ background: "rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.12)", color: "#0F0F0F", padding: "6px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
             🌐 {lang === 'en' ? 'हिंदी' : 'English'}
           </button>
-          <Link to="/login" className="outline-btn" style={{ padding: "8px 18px", borderRadius: "50px", textDecoration: "none", color: "white", fontSize: "13px", fontWeight: 700 }}>
+          <Link to="/login" className="nav-outline-btn" style={{ padding: "8px 18px", borderRadius: "50px", textDecoration: "none", color: "#0F0F0F", fontSize: "13px", fontWeight: 700 }}>
             {t.ctaOwnerLogin}
           </Link>
-          <Link to="/admin/login" className="outline-btn" style={{ padding: "8px 18px", borderRadius: "50px", textDecoration: "none", color: "rgba(255,255,255,0.6)", fontSize: "13px", fontWeight: 600 }}>
+          <Link to="/admin/login" className="nav-outline-btn" style={{ padding: "8px 18px", borderRadius: "50px", textDecoration: "none", color: "rgba(0,0,0,0.55)", fontSize: "13px", fontWeight: 600 }}>
             {t.ctaAdminLogin}
           </Link>
         </div>
@@ -384,20 +395,22 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="footer-container" style={{ padding: "40px", borderTop: "1px solid rgba(255, 255, 255, 0.08)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, maxWidth: "1200px", margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: "22px" }}>🍽️</span>
-          <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: "18px" }}>MenuMitra</span>
-        </div>
-        <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.35)" }}>
-          © 2026 MenuMitra · All Rights Reserved
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(232, 101, 10, 0.05)", border: "1px solid rgba(232, 101, 10, 0.15)", padding: "6px 16px", borderRadius: "50px" }}>
-          <span style={{ color: "#E8650A" }}>✦</span>
-          <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.55)", fontWeight: 500 }}>Designed & Developed by</span>
-          <span style={{ fontSize: "13px", fontFamily: "'Playfair Display', serif", fontWeight: 900, color: "#E8650A" }}>Abhijit Kumar Misra</span>
-        </div>
-      </footer>
+      <div style={{ background: "#857f77", borderTop: "1px solid rgba(0, 0, 0, 0.12)", color: "#0F0F0F", marginTop: "40px" }}>
+        <footer className="footer-container" style={{ padding: "40px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, maxWidth: "1200px", margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: "22px" }}>🍽️</span>
+            <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: "18px", color: "#0F0F0F" }}>MenuMitra</span>
+          </div>
+          <div style={{ fontSize: "12px", color: "rgba(0, 0, 0, 0.6)" }}>
+            © 2026 MenuMitra · All Rights Reserved
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(0, 0, 0, 0.05)", border: "1px solid rgba(0, 0, 0, 0.1)", padding: "6px 16px", borderRadius: "50px" }}>
+            <span style={{ color: "#8B4000" }}>✦</span>
+            <span style={{ fontSize: "12px", color: "rgba(0, 0, 0, 0.6)", fontWeight: 500 }}>Designed & Developed by</span>
+            <span style={{ fontSize: "13px", fontFamily: "'Playfair Display', serif", fontWeight: 900, color: "#8B4000" }}>Abhijit Kumar Misra</span>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
