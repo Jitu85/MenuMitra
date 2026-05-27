@@ -25,8 +25,24 @@ for (const [key, value] of Object.entries(fallbackEnv)) {
   }
 }
 
-const { server } = require('./src/app');
+// Run Prisma migrations at startup (production only), then start the server
+async function main() {
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      const { execSync } = require('child_process');
+      console.log('[Startup] Running prisma migrate deploy...');
+      execSync('npx prisma migrate deploy', { stdio: 'inherit', cwd: __dirname });
+      console.log('[Startup] Prisma migrations complete.');
+    } catch (err) {
+      console.error('[Startup] Prisma migrate warning (may be harmless):', err.message);
+      // Don't crash — tables may already exist
+    }
+  }
 
+  require('./src/app');
+}
 
-// The app configures port and launches internally when app.js is loaded
-// or we run it from index.js here to ensure standard execution structure.
+main().catch(err => {
+  console.error('[Startup] Fatal error:', err);
+  process.exit(1);
+});
