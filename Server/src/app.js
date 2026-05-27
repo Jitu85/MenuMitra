@@ -1,7 +1,6 @@
-// Load .env without override — Railway's env vars always take priority
+// Standard dotenv - does NOT override existing env vars set by Railway
 const path = require('path');
-const dotenv = require('dotenv');
-dotenv.config({ path: path.resolve(__dirname, '../.env'), override: false });
+try { require('dotenv').config({ path: path.resolve(__dirname, '../.env') }); } catch(e) {}
 
 // Production environment variable injection fallbacks to ensure Railway works out-of-the-box
 const fallbackEnv = {
