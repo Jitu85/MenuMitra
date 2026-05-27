@@ -1,7 +1,9 @@
-// Load environment variables dynamically based on file location before any other imports
+// Load .env for local development only (Railway injects env vars before Node starts)
 const path = require('path');
 const dotenv = require('dotenv');
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+if (!process.env.PORT) {
+  dotenv.config({ path: path.resolve(__dirname, '../.env') });
+}
 
 // Production environment variable injection fallbacks to ensure Railway works out-of-the-box
 const fallbackEnv = {
