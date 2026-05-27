@@ -42,3 +42,5 @@ Server/scratch_*.js
 Server/test_*.js
 Server/e2e_test.js
 Server/search_text.js
+
+.vercel

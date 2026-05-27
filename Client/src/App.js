@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import { useAuthStore } from './store/authStore';
+import { Analytics } from '@vercel/analytics/react';
 
 // ── Public pages ──────────────────────────────────────
 import Landing       from './pages/Landing';
@@ -15,7 +16,7 @@ import OwnerDashboard from './pages/owner/Dashboard';
 import MenuManagement from './pages/owner/MenuManagement';
 import Orders         from './pages/owner/Orders';
 import QRCode         from './pages/owner/QRCode';
-import Analytics      from './pages/owner/Analytics';
+import OwnerAnalytics      from './pages/owner/Analytics';
 import PaymentSettings from './pages/owner/PaymentSettings';
 import Subscription   from './pages/owner/Subscription';
 import Settings       from './pages/owner/Settings';
@@ -46,6 +47,7 @@ export default function App() {
   }, [initAuth]);
 
   return (
+    <>
     <BrowserRouter>
       <Routes>
         {/* Public */}
@@ -60,7 +62,7 @@ export default function App() {
         <Route path='/dashboard/menu'        element={<OwnerRoute><MenuManagement /></OwnerRoute>} />
         <Route path='/dashboard/orders'      element={<OwnerRoute><Orders /></OwnerRoute>} />
         <Route path='/dashboard/qr'          element={<OwnerRoute><QRCode /></OwnerRoute>} />
-        <Route path='/dashboard/analytics'   element={<OwnerRoute><Analytics /></OwnerRoute>} />
+        <Route path='/dashboard/analytics'   element={<OwnerRoute><OwnerAnalytics /></OwnerRoute>} />
         <Route path='/dashboard/payments'    element={<OwnerRoute><PaymentSettings /></OwnerRoute>} />
         <Route path='/dashboard/subscription' element={<OwnerRoute><Subscription /></OwnerRoute>} />
         <Route path='/dashboard/settings'    element={<OwnerRoute><Settings /></OwnerRoute>} />
@@ -73,5 +75,7 @@ export default function App() {
         <Route path='/admin/resets'    element={<AdminRoute><PasswordResets /></AdminRoute>} />
       </Routes>
     </BrowserRouter>
+    <Analytics />
+    </>
   );
 }
