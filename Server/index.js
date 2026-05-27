@@ -1,16 +1,10 @@
 // MenuMitra Backend Entry Point
 // Developed by Abhijit Kumar Misra
 
-// Load .env for local development only.
-// On Railway, environment variables are injected by the platform BEFORE Node starts,
-// so we must NOT override them. Using { override: false } (default) is safe,
-// but we skip loading .env entirely when PORT is already set by Railway.
 const path = require('path');
 const dotenv = require('dotenv');
-if (!process.env.PORT) {
-  // Only in local dev — Railway always sets PORT before starting the process
-  dotenv.config({ path: path.resolve(__dirname, '.env') });
-}
+// Load .env without override — Railway's env vars always take priority
+dotenv.config({ path: path.resolve(__dirname, '.env'), override: false });
 
 // Production environment variable injection fallbacks to ensure Railway works out-of-the-box
 const fallbackEnv = {

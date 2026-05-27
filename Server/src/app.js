@@ -1,9 +1,7 @@
-// Load .env for local development only (Railway injects env vars before Node starts)
+// Load .env without override — Railway's env vars always take priority
 const path = require('path');
 const dotenv = require('dotenv');
-if (!process.env.PORT) {
-  dotenv.config({ path: path.resolve(__dirname, '../.env') });
-}
+dotenv.config({ path: path.resolve(__dirname, '../.env'), override: false });
 
 // Production environment variable injection fallbacks to ensure Railway works out-of-the-box
 const fallbackEnv = {
