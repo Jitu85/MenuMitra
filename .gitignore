@@ -35,3 +35,10 @@ Thumbs.db
 # Databases & Backups
 *.db
 *.db-journal
+
+# Scratch / Debug / Test scripts (not part of the app)
+Server/check_*.js
+Server/scratch_*.js
+Server/test_*.js
+Server/e2e_test.js
+Server/search_text.js

@@ -132,6 +132,16 @@ app.use('/api/public', publicRoutes);
 app.use('/api/print', printRoutes);
 app.use('/api/qr', qrRoutes);
 
+// Health check route (used by Railway to verify the deployment is live)
+app.get('/api/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).json({ status: 'ok', db: 'connected', env: process.env.NODE_ENV });
+  } catch (err) {
+    res.status(503).json({ status: 'error', db: 'unreachable', message: err.message });
+  }
+});
+
 // Base route
 app.get('/', (req, res) => {
   res.json({ message: 'MenuMitra API Server is running.', developer: 'Abhijit Kumar Misra' });

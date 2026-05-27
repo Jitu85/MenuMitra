@@ -1,8 +1,16 @@
-# nixpacks.toml for Railway deployment
-# Configures system packages to support Node.js execution cleanly without unused chromium/puppeteer dependencies
+# nixpacks.toml — Railway deployment config for MenuMitra Server
 
 [phases.setup]
-nixPkgs = [
-  "nodejs"
+nixPkgs = ["nodejs"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = [
+  "npx prisma generate",
+  "npx prisma migrate deploy"
 ]
 
+[start]
+cmd = "node index.js"
