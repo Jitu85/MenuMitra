@@ -25,20 +25,10 @@ for (const [key, value] of Object.entries(fallbackEnv)) {
   }
 }
 
-// Run Prisma migrations at startup (production only), then start the server
+// Start the server
 async function main() {
-  if (process.env.NODE_ENV === 'production') {
-    try {
-      const { execSync } = require('child_process');
-      console.log('[Startup] Running prisma migrate deploy...');
-      execSync('npx prisma migrate deploy', { stdio: 'inherit', cwd: __dirname });
-      console.log('[Startup] Prisma migrations complete.');
-    } catch (err) {
-      console.error('[Startup] Prisma migrate warning (may be harmless):', err.message);
-      // Don't crash — tables may already exist
-    }
-  }
-
+  // Note: Database tables are managed directly (no Prisma migration files).
+  // Prisma Client is used for queries only. No migrate deploy needed.
   require('./src/app');
 }
 
