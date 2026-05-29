@@ -197,7 +197,7 @@ router.get('/stats', async (req, res, next) => {
         paymentStatus: o.payment_status,
         createdAt: o.created_at,
         items: o.items.map(item => ({
-          name: item.item_name,
+          name: item.item_name_en || item.item_name_hi,
           qty: item.quantity,
           price: item.unit_price
         }))
@@ -249,7 +249,8 @@ router.get('/analytics', async (req, res, next) => {
       },
       select: {
         food_item_id: true,
-        item_name: true,
+        item_name_en: true,
+        item_name_hi: true,
         quantity: true,
         total_price: true
       }
@@ -257,9 +258,10 @@ router.get('/analytics', async (req, res, next) => {
 
     const itemSalesMap = {};
     orderItems.forEach(item => {
-      const key = item.food_item_id || item.item_name;
+      const name = item.item_name_en || item.item_name_hi;
+      const key = item.food_item_id || name;
       if (!itemSalesMap[key]) {
-        itemSalesMap[key] = { id: item.food_item_id, name: item.item_name, units: 0, sales: 0 };
+        itemSalesMap[key] = { id: item.food_item_id, name: name, units: 0, sales: 0 };
       }
       itemSalesMap[key].units += item.quantity;
       itemSalesMap[key].sales += Number(item.total_price);
@@ -286,7 +288,7 @@ router.get('/analytics', async (req, res, next) => {
           name: baseItem.name,
           photo: details?.photo_url || "🍽️",
           isAvailable: details ? details.is_available : false,
-          categoryName: details?.category ? details.category.name : "Deleted Category",
+          categoryName: details?.category ? details.category.name_en : "Deleted Category",
           price: details ? Number(details.price) : (baseItem.units > 0 ? (baseItem.sales / baseItem.units) : 0),
           sales: baseItem.units,
           revenue: baseItem.sales

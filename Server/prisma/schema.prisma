@@ -1,11 +1,11 @@
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Admin {
@@ -21,37 +21,37 @@ model Admin {
 }
 
 model Owner {
-  id                   String               @id @default(uuid())
-  business_name        String
-  business_type        String // 'hotel','restaurant','tea_stall','cafe','dhaba','other'
-  owner_name           String
-  email                String               @unique
-  phone                String               @unique
-  password_hash        String
-  address              String
-  city                 String
-  state                String
-  pincode              String
-  gstin                String?
-  fssai_license        String?
-  table_count          Int                  @default(10)
-  unique_slug          String               @unique
-  is_active            Boolean              @default(true)
-  subscription_status  String               @default("trial") // 'active','expired','trial','suspended'
-  subscription_expires DateTime?
-  payment_method_pref  String               @default("both") // 'upi_qr','razorpay','both'
-  upi_id               String?
-  upi_qr_image_url     String?
-  razorpay_key_id      String?
-  razorpay_key_secret  String?
-  profile_photo_url    String?
-  created_at           DateTime             @default(now())
-  updated_at           DateTime             @updatedAt
-  categories           Category[]
-  food_items           FoodItem[]
-  orders               Order[]
-  subscriptions        Subscription[]
+  id                    String               @id @default(uuid())
+  business_name         String
+  business_type         String
+  owner_name            String
+  email                 String               @unique
+  phone                 String               @unique
+  password_hash         String
+  address               String
+  city                  String
+  state                 String
+  pincode               String
+  gstin                 String?
+  fssai_license         String?
+  table_count           Int                  @default(10)
+  unique_slug           String               @unique
+  is_active             Boolean              @default(true)
+  subscription_status   String               @default("trial")
+  subscription_expires  DateTime?
+  payment_method_pref   String               @default("both")
+  upi_id                String?
+  upi_qr_image_url      String?
+  razorpay_key_id       String?
+  razorpay_key_secret   String?
+  profile_photo_url     String?
+  created_at            DateTime             @default(now())
+  updated_at            DateTime             @updatedAt
+  categories            Category[]
+  food_items            FoodItem[]
+  orders                Order[]
   password_reset_tokens PasswordResetToken[]
+  subscriptions         Subscription[]
 
   @@map("owners")
 }
@@ -59,10 +59,11 @@ model Owner {
 model Category {
   id         String     @id @default(uuid())
   owner_id   String
-  owner      Owner      @relation(fields: [owner_id], references: [id], onDelete: Cascade)
-  name       String
+  name_en    String
+  name_hi    String
   sort_order Int        @default(0)
   created_at DateTime   @default(now())
+  owner      Owner      @relation(fields: [owner_id], references: [id], onDelete: Cascade)
   food_items FoodItem[]
 
   @@map("categories")
@@ -71,11 +72,11 @@ model Category {
 model FoodItem {
   id             String      @id @default(uuid())
   owner_id       String
-  owner          Owner       @relation(fields: [owner_id], references: [id], onDelete: Cascade)
   category_id    String?
-  category       Category?   @relation(fields: [category_id], references: [id], onDelete: SetNull)
-  name           String
-  description    String?
+  name_en        String
+  name_hi        String
+  description_en String?
+  description_hi String?
   price          Float
   photo_url      String?
   is_veg         Boolean     @default(true)
@@ -83,6 +84,8 @@ model FoodItem {
   sort_order     Int         @default(0)
   created_at     DateTime    @default(now())
   updated_at     DateTime    @updatedAt
+  category       Category?   @relation(fields: [category_id], references: [id])
+  owner          Owner       @relation(fields: [owner_id], references: [id], onDelete: Cascade)
   order_items    OrderItem[]
 
   @@map("food_items")
@@ -91,20 +94,21 @@ model FoodItem {
 model Order {
   id                  String      @id @default(uuid())
   owner_id            String?
-  owner               Owner?      @relation(fields: [owner_id], references: [id], onDelete: SetNull)
   order_number        String
   table_number        String
   customer_name       String?
   subtotal            Float
   tax_amount          Float       @default(0)
   total_amount        Float
-  payment_method      String? // 'upi_qr','razorpay'
-  payment_status      String      @default("pending") // 'pending','paid','failed'
+  payment_method      String?
+  payment_status      String      @default("pending")
   razorpay_order_id   String?
   razorpay_payment_id String?
+  language_used       String      @default("en")
   notes               String?
   created_at          DateTime    @default(now())
   items               OrderItem[]
+  owner               Owner?      @relation(fields: [owner_id], references: [id])
 
   @@map("orders")
 }
@@ -112,13 +116,14 @@ model Order {
 model OrderItem {
   id           String    @id @default(uuid())
   order_id     String
-  order        Order     @relation(fields: [order_id], references: [id], onDelete: Cascade)
   food_item_id String?
-  food_item    FoodItem? @relation(fields: [food_item_id], references: [id], onDelete: SetNull)
-  item_name    String
+  item_name_en String
+  item_name_hi String
   quantity     Int
   unit_price   Float
   total_price  Float
+  food_item    FoodItem? @relation(fields: [food_item_id], references: [id])
+  order        Order     @relation(fields: [order_id], references: [id], onDelete: Cascade)
 
   @@map("order_items")
 }
@@ -126,27 +131,27 @@ model OrderItem {
 model Subscription {
   id                       String           @id @default(uuid())
   owner_id                 String
-  owner                    Owner            @relation(fields: [owner_id], references: [id], onDelete: Cascade)
   plan_id                  String
-  plan                     SubscriptionPlan @relation(fields: [plan_id], references: [id])
   amount_paid              Float
   currency                 String           @default("INR")
   razorpay_payment_id      String?
   razorpay_subscription_id String?
   start_date               DateTime
   end_date                 DateTime
-  status                   String           @default("active") // 'active','expired','cancelled'
+  status                   String           @default("active")
   created_at               DateTime         @default(now())
+  owner                    Owner            @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+  plan                     SubscriptionPlan @relation(fields: [plan_id], references: [id])
 
   @@map("subscriptions")
 }
 
 model SubscriptionPlan {
   id            String         @id @default(uuid())
-  plan_name     String // "MenuMitra Standard"
-  price_monthly Float // 100.00
+  plan_name     String
+  price_monthly Float
   trial_days    Int            @default(30)
-  features      String? // Serialized JSON string of features
+  features      String?
   is_active     Boolean        @default(true)
   created_at    DateTime       @default(now())
   subscriptions Subscription[]
@@ -157,11 +162,11 @@ model SubscriptionPlan {
 model AuditLog {
   id          String   @id @default(uuid())
   actor_id    String
-  actor_role  String // 'admin','owner'
+  actor_role  String
   action      String
   target_type String?
   target_id   String?
-  details     String? // String details or serialized JSON
+  details     String?
   ip_address  String?
   user_agent  String?
   created_at  DateTime @default(now())
@@ -172,11 +177,11 @@ model AuditLog {
 model PasswordResetToken {
   id         String   @id @default(uuid())
   owner_id   String
-  owner      Owner    @relation(fields: [owner_id], references: [id], onDelete: Cascade)
   token      String   @unique
   expires_at DateTime
   used       Boolean  @default(false)
   created_at DateTime @default(now())
+  owner      Owner    @relation(fields: [owner_id], references: [id], onDelete: Cascade)
 
   @@map("password_reset_tokens")
 }

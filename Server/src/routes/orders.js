@@ -68,7 +68,7 @@ router.post('/', async (req, res, next) => {
         return res.status(404).json({ message: `Food item not found in menu: ${item.food_item_id}` });
       }
       if (!dbItem.is_available) {
-        return res.status(400).json({ message: `Food item is sold out: ${dbItem.name}` });
+        return res.status(400).json({ message: `Food item is sold out: ${dbItem.name_en}` });
       }
 
       const totalItemPrice = dbItem.price * parseInt(item.quantity, 10);
@@ -76,7 +76,8 @@ router.post('/', async (req, res, next) => {
 
       orderItemsData.push({
         food_item_id: dbItem.id,
-        item_name: dbItem.name,
+        item_name_en: dbItem.name_en,
+        item_name_hi: dbItem.name_hi,
         quantity: parseInt(item.quantity, 10),
         unit_price: dbItem.price,
         total_price: totalItemPrice
@@ -118,7 +119,7 @@ router.post('/', async (req, res, next) => {
       createdAt: newOrder.created_at,
       paymentMethod: newOrder.payment_method,
       items: newOrder.items.map(i => ({
-        name: i.item_name,
+        name: i.item_name_en || i.item_name_hi,
         qty: i.quantity,
         price: i.unit_price
       }))
@@ -186,7 +187,7 @@ router.get('/', async (req, res, next) => {
       items: o.items.map(i => ({
         id: i.id,
         foodItemId: i.food_item_id,
-        name: i.item_name,
+        name: i.item_name_en || i.item_name_hi,
         qty: i.quantity,
         price: i.unit_price,
         totalPrice: i.total_price

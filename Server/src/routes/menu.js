@@ -26,7 +26,10 @@ router.get('/categories', async (req, res, next) => {
       where: { owner_id: req.user.id },
       orderBy: { sort_order: 'asc' }
     });
-    res.json(categories);
+    res.json(categories.map(c => ({
+      ...c,
+      name: c.name_en || c.name
+    })));
   } catch (err) {
     next(err);
   }
@@ -45,12 +48,13 @@ router.post('/categories', async (req, res, next) => {
     const category = await prisma.category.create({
       data: {
         owner_id: req.user.id,
-        name,
+        name_en: name,
+        name_hi: name,
         sort_order: sort_order ? parseInt(sort_order, 10) : 0
       }
     });
 
-    res.status(201).json({ message: 'Category created successfully!', category });
+    res.status(201).json({ message: 'Category created successfully!', category: { ...category, name: category.name_en || category.name } });
   } catch (err) {
     next(err);
   }
@@ -63,12 +67,18 @@ router.put('/categories/:id', async (req, res, next) => {
     const { id } = req.params;
     const { name, sort_order } = req.body;
 
+    const dataToUpdate = {};
+    if (name !== undefined) {
+      dataToUpdate.name_en = name;
+      dataToUpdate.name_hi = name;
+    }
+    if (sort_order !== undefined) {
+      dataToUpdate.sort_order = sort_order ? parseInt(sort_order, 10) : undefined;
+    }
+
     const updated = await prisma.category.updateMany({
       where: { id, owner_id: req.user.id },
-      data: {
-        name,
-        sort_order: sort_order ? parseInt(sort_order, 10) : undefined
-      }
+      data: dataToUpdate
     });
 
     if (updated.count === 0) {
@@ -147,7 +157,12 @@ router.get('/items', async (req, res, next) => {
       include: { category: true },
       orderBy: { sort_order: 'asc' }
     });
-    res.json(items);
+    res.json(items.map(item => ({
+      ...item,
+      name: item.name_en || item.name,
+      description: item.description_en || item.description,
+      category: item.category ? { ...item.category, name: item.category.name_en || item.category.name } : null
+    })));
   } catch (err) {
     next(err);
   }
@@ -176,8 +191,10 @@ router.post('/items', async (req, res, next) => {
       data: {
         owner_id: req.user.id,
         category_id: category_id || null,
-        name,
-        description: description || null,
+        name_en: name,
+        name_hi: name,
+        description_en: description || null,
+        description_hi: description || null,
         price: parseFloat(price),
         photo_url: photo_url || null,
         is_veg: is_veg === undefined ? true : is_veg,
@@ -186,7 +203,7 @@ router.post('/items', async (req, res, next) => {
       }
     });
 
-    res.status(201).json({ message: 'Food item created successfully!', item });
+    res.status(201).json({ message: 'Food item created successfully!', item: { ...item, name: item.name_en || item.name, description: item.description_en || item.description } });
   } catch (err) {
     next(err);
   }
@@ -209,9 +226,15 @@ router.put('/items/:id', async (req, res, next) => {
     } = req.body;
 
     const dataToUpdate = {};
-    if (name !== undefined) dataToUpdate.name = name;
+    if (name !== undefined) {
+      dataToUpdate.name_en = name;
+      dataToUpdate.name_hi = name;
+    }
     if (category_id !== undefined) dataToUpdate.category_id = category_id || null;
-    if (description !== undefined) dataToUpdate.description = description || null;
+    if (description !== undefined) {
+      dataToUpdate.description_en = description || null;
+      dataToUpdate.description_hi = description || null;
+    }
     if (price !== undefined) dataToUpdate.price = parseFloat(price);
     if (photo_url !== undefined) dataToUpdate.photo_url = photo_url || null;
     if (is_veg !== undefined) dataToUpdate.is_veg = is_veg;

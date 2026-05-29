@@ -56,11 +56,11 @@ router.get('/menu/:slug', async (req, res, next) => {
       profilePhotoUrl: owner.profile_photo_url,
       categories: owner.categories.map(cat => ({
         id: cat.id,
-        name: cat.name,
+        name: cat.name_en,
         items: cat.food_items.map(item => ({
           id: item.id,
-          name: item.name,
-          description: item.description,
+          name: item.name_en,
+          description: item.description_en,
           price: item.price,
           photoUrl: item.photo_url,
           isVeg: item.is_veg,
