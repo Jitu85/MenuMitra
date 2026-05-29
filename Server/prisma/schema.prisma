@@ -60,8 +60,7 @@ model Category {
   id         String     @id @default(uuid())
   owner_id   String
   owner      Owner      @relation(fields: [owner_id], references: [id], onDelete: Cascade)
-  name_en    String
-  name_hi    String
+  name       String
   sort_order Int        @default(0)
   created_at DateTime   @default(now())
   food_items FoodItem[]
@@ -75,10 +74,8 @@ model FoodItem {
   owner          Owner       @relation(fields: [owner_id], references: [id], onDelete: Cascade)
   category_id    String?
   category       Category?   @relation(fields: [category_id], references: [id], onDelete: SetNull)
-  name_en        String
-  name_hi        String
-  description_en String?
-  description_hi String?
+  name           String
+  description    String?
   price          Float
   photo_url      String?
   is_veg         Boolean     @default(true)
@@ -105,7 +102,6 @@ model Order {
   payment_status      String      @default("pending") // 'pending','paid','failed'
   razorpay_order_id   String?
   razorpay_payment_id String?
-  language_used       String      @default("en")
   notes               String?
   created_at          DateTime    @default(now())
   items               OrderItem[]
@@ -119,8 +115,7 @@ model OrderItem {
   order        Order     @relation(fields: [order_id], references: [id], onDelete: Cascade)
   food_item_id String?
   food_item    FoodItem? @relation(fields: [food_item_id], references: [id], onDelete: SetNull)
-  item_name_en String
-  item_name_hi String
+  item_name    String
   quantity     Int
   unit_price   Float
   total_price  Float

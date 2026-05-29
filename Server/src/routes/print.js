@@ -136,7 +136,7 @@ router.get('/receipt/:id', async (req, res, next) => {
       <tbody>
         ${order.items.map(item => `
           <tr>
-            <td>${item.item_name_en}</td>
+            <td>${item.item_name}</td>
             <td class="text-center">${item.quantity}</td>
             <td class="text-right">₹${item.total_price.toFixed(2)}</td>
           </tr>

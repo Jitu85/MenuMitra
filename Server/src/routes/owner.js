@@ -197,7 +197,7 @@ router.get('/stats', async (req, res, next) => {
         paymentStatus: o.payment_status,
         createdAt: o.created_at,
         items: o.items.map(item => ({
-          nameEn: item.item_name_en,
+          name: item.item_name,
           qty: item.quantity,
           price: item.unit_price
         }))
@@ -248,7 +248,8 @@ router.get('/analytics', async (req, res, next) => {
         }
       },
       select: {
-        item_name_en: true,
+        food_item_id: true,
+        item_name: true,
         quantity: true,
         total_price: true
       }
@@ -256,16 +257,53 @@ router.get('/analytics', async (req, res, next) => {
 
     const itemSalesMap = {};
     orderItems.forEach(item => {
-      if (!itemSalesMap[item.item_name_en]) {
-        itemSalesMap[item.item_name_en] = { name: item.item_name_en, units: 0, sales: 0 };
+      const key = item.food_item_id || item.item_name;
+      if (!itemSalesMap[key]) {
+        itemSalesMap[key] = { id: item.food_item_id, name: item.item_name, units: 0, sales: 0 };
       }
-      itemSalesMap[item.item_name_en].units += item.quantity;
-      itemSalesMap[item.item_name_en].sales += item.total_price;
+      itemSalesMap[key].units += item.quantity;
+      itemSalesMap[key].sales += Number(item.total_price);
     });
 
-    const topSellingItems = Object.values(itemSalesMap)
+    const topSellingItemsBase = Object.values(itemSalesMap)
       .sort((a, b) => b.units - a.units)
-      .slice(0, 5);
+      .slice(0, 10); // increased to 10 for better table view
+
+    // Fetch extra details
+    const topItemIds = topSellingItemsBase.map(i => i.id).filter(Boolean);
+    let topSellingItems = [];
+
+    if (topItemIds.length > 0) {
+      const foodItems = await prisma.foodItem.findMany({
+        where: { id: { in: topItemIds } },
+        include: { category: true }
+      });
+      
+      topSellingItems = topSellingItemsBase.map(baseItem => {
+        const details = foodItems.find(f => f.id === baseItem.id);
+        return {
+          id: baseItem.id || Math.random().toString(),
+          name: baseItem.name,
+          photo: details?.photo_url || "🍽️",
+          isAvailable: details ? details.is_available : false,
+          categoryName: details?.category ? details.category.name : "Deleted Category",
+          price: details ? Number(details.price) : (baseItem.units > 0 ? (baseItem.sales / baseItem.units) : 0),
+          sales: baseItem.units,
+          revenue: baseItem.sales
+        };
+      });
+    } else {
+      topSellingItems = topSellingItemsBase.map(b => ({
+        id: b.id || Math.random().toString(),
+        name: b.name,
+        photo: "🍽️",
+        isAvailable: false,
+        categoryName: "Unknown",
+        price: 0,
+        sales: b.units,
+        revenue: b.sales
+      }));
+    }
 
     // Peak Order Hours analysis
     const allOrders = await prisma.order.findMany({

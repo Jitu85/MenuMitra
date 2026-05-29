@@ -127,7 +127,7 @@ export default function Subscription() {
         <div className="card" style={{ padding: "24px", marginBottom: 20 }}>
           <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 16, fontWeight: 800, marginBottom: 16 }}>📋 Plan Benefits & Inclusions</h3>
           {[
-            "Bilingual Customer Ordering Menu (English & हिंदी)",
+            "Elegant Digital Customer Menu",
             "Instant Real-Time Sound and Visual Order Alerts via WebSockets",
             "Direct Custom UPI QR Scan & Razorpay PG Payments",
             "Headerless Direct Printing for 58mm/80mm Thermal Receipt Printers",

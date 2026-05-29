@@ -1,7 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken, requireOwner } = require('../middleware/auth');
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const stream = require('stream');
 
+// Configure multer for memory storage and 1MB size limit
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 1 * 1024 * 1024 } // 1MB limit
+});
 // Apply auth middlewares
 router.use(authenticateToken);
 router.use(requireOwner);
@@ -28,17 +36,16 @@ router.get('/categories', async (req, res, next) => {
 router.post('/categories', async (req, res, next) => {
   const prisma = req.app.get('prisma');
   try {
-    const { name_en, name_hi, sort_order } = req.body;
+    const { name, sort_order } = req.body;
     
-    if (!name_en || !name_hi) {
-      return res.status(400).json({ message: 'Category names in both English and Hindi are required.' });
+    if (!name) {
+      return res.status(400).json({ message: 'Category name is required.' });
     }
 
     const category = await prisma.category.create({
       data: {
         owner_id: req.user.id,
-        name_en,
-        name_hi,
+        name,
         sort_order: sort_order ? parseInt(sort_order, 10) : 0
       }
     });
@@ -54,13 +61,12 @@ router.put('/categories/:id', async (req, res, next) => {
   const prisma = req.app.get('prisma');
   try {
     const { id } = req.params;
-    const { name_en, name_hi, sort_order } = req.body;
+    const { name, sort_order } = req.body;
 
     const updated = await prisma.category.updateMany({
       where: { id, owner_id: req.user.id },
       data: {
-        name_en,
-        name_hi,
+        name,
         sort_order: sort_order ? parseInt(sort_order, 10) : undefined
       }
     });
@@ -96,6 +102,39 @@ router.delete('/categories/:id', async (req, res, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FOOD ITEM PHOTO UPLOAD
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/items/upload', upload.single('photo'), (req, res, next) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No photo uploaded. Please select a valid image under 1MB.' });
+  }
+
+  const uploadStream = cloudinary.uploader.upload_stream(
+    {
+      folder: 'menumitra/food_items',
+      width: 500,
+      height: 500,
+      crop: 'fill',
+      gravity: 'center',
+      format: 'webp',
+      quality: 'auto'
+    },
+    (error, result) => {
+      if (error) {
+        console.error('Cloudinary upload error:', error);
+        return res.status(500).json({ message: 'Failed to upload photo to cloud storage.' });
+      }
+      res.json({ url: result.secure_url });
+    }
+  );
+
+  const bufferStream = new stream.PassThrough();
+  bufferStream.end(req.file.buffer);
+  bufferStream.pipe(uploadStream);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // FOOD ITEM CRUD
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -119,11 +158,9 @@ router.post('/items', async (req, res, next) => {
   const prisma = req.app.get('prisma');
   try {
     const {
-      name_en,
-      name_hi,
+      name,
       category_id,
-      description_en,
-      description_hi,
+      description,
       price,
       photo_url,
       is_veg,
@@ -131,18 +168,16 @@ router.post('/items', async (req, res, next) => {
       sort_order
     } = req.body;
 
-    if (!name_en || !name_hi || price === undefined) {
-      return res.status(400).json({ message: 'Item name (EN/HI) and price are required.' });
+    if (!name || price === undefined) {
+      return res.status(400).json({ message: 'Item name and price are required.' });
     }
 
     const item = await prisma.foodItem.create({
       data: {
         owner_id: req.user.id,
         category_id: category_id || null,
-        name_en,
-        name_hi,
-        description_en: description_en || null,
-        description_hi: description_hi || null,
+        name,
+        description: description || null,
         price: parseFloat(price),
         photo_url: photo_url || null,
         is_veg: is_veg === undefined ? true : is_veg,
@@ -163,11 +198,9 @@ router.put('/items/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
-      name_en,
-      name_hi,
+      name,
       category_id,
-      description_en,
-      description_hi,
+      description,
       price,
       photo_url,
       is_veg,
@@ -176,11 +209,9 @@ router.put('/items/:id', async (req, res, next) => {
     } = req.body;
 
     const dataToUpdate = {};
-    if (name_en !== undefined) dataToUpdate.name_en = name_en;
-    if (name_hi !== undefined) dataToUpdate.name_hi = name_hi;
+    if (name !== undefined) dataToUpdate.name = name;
     if (category_id !== undefined) dataToUpdate.category_id = category_id || null;
-    if (description_en !== undefined) dataToUpdate.description_en = description_en || null;
-    if (description_hi !== undefined) dataToUpdate.description_hi = description_hi || null;
+    if (description !== undefined) dataToUpdate.description = description || null;
     if (price !== undefined) dataToUpdate.price = parseFloat(price);
     if (photo_url !== undefined) dataToUpdate.photo_url = photo_url || null;
     if (is_veg !== undefined) dataToUpdate.is_veg = is_veg;

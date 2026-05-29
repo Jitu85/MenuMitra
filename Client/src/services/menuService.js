@@ -17,3 +17,9 @@ export const updateItem = (id, data) => api.put(`/menu/items/${id}`, data);
 export const deleteItem = (id) => api.delete(`/menu/items/${id}`);
 
 export const toggleAvailability = (id) => api.patch(`/menu/items/${id}/toggle`);
+
+export const uploadItemPhoto = (formData) => api.post('/menu/items/upload', formData, {
+  headers: {
+    'Content-Type': 'multipart/form-data'
+  }
+});

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-// Fetch Guest Bilingual Menu by Business Slug
+// Fetch Guest Menu by Business Slug
 router.get('/menu/:slug', async (req, res, next) => {
   const prisma = req.app.get('prisma');
   try {
@@ -56,14 +56,11 @@ router.get('/menu/:slug', async (req, res, next) => {
       profilePhotoUrl: owner.profile_photo_url,
       categories: owner.categories.map(cat => ({
         id: cat.id,
-        nameEn: cat.name_en,
-        nameHi: cat.name_hi,
+        name: cat.name,
         items: cat.food_items.map(item => ({
           id: item.id,
-          nameEn: item.name_en,
-          nameHi: item.name_hi,
-          descriptionEn: item.description_en,
-          descriptionHi: item.description_hi,
+          name: item.name,
+          description: item.description,
           price: item.price,
           photoUrl: item.photo_url,
           isVeg: item.is_veg,

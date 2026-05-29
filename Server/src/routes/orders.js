@@ -17,8 +17,7 @@ router.post('/', async (req, res, next) => {
       customer_name,
       payment_method,
       items, // Array of { food_item_id, quantity }
-      notes,
-      language_used
+      notes
     } = req.body;
 
     if (!owner_id || !table_number || !items || items.length === 0) {
@@ -69,7 +68,7 @@ router.post('/', async (req, res, next) => {
         return res.status(404).json({ message: `Food item not found in menu: ${item.food_item_id}` });
       }
       if (!dbItem.is_available) {
-        return res.status(400).json({ message: `Food item is sold out: ${dbItem.name_en}` });
+        return res.status(400).json({ message: `Food item is sold out: ${dbItem.name}` });
       }
 
       const totalItemPrice = dbItem.price * parseInt(item.quantity, 10);
@@ -77,8 +76,7 @@ router.post('/', async (req, res, next) => {
 
       orderItemsData.push({
         food_item_id: dbItem.id,
-        item_name_en: dbItem.name_en,
-        item_name_hi: dbItem.name_hi,
+        item_name: dbItem.name,
         quantity: parseInt(item.quantity, 10),
         unit_price: dbItem.price,
         total_price: totalItemPrice
@@ -101,7 +99,6 @@ router.post('/', async (req, res, next) => {
         payment_method,
         payment_status: 'pending', // Awaiting payment
         notes: notes || null,
-        language_used: language_used || 'en',
         items: {
           create: orderItemsData
         }
@@ -121,7 +118,7 @@ router.post('/', async (req, res, next) => {
       createdAt: newOrder.created_at,
       paymentMethod: newOrder.payment_method,
       items: newOrder.items.map(i => ({
-        nameEn: i.item_name_en,
+        name: i.item_name,
         qty: i.quantity,
         price: i.unit_price
       }))
@@ -189,8 +186,7 @@ router.get('/', async (req, res, next) => {
       items: o.items.map(i => ({
         id: i.id,
         foodItemId: i.food_item_id,
-        nameEn: i.item_name_en,
-        nameHi: i.item_name_hi,
+        name: i.item_name,
         qty: i.quantity,
         price: i.unit_price,
         totalPrice: i.total_price

@@ -50,7 +50,7 @@ export default function Orders() {
         paymentStatus: 'pending',
         createdAt: newOrder.createdAt || new Date().toISOString(),
         items: newOrder.items.map(i => ({
-          nameEn: i.nameEn,
+          name: i.name,
           qty: i.qty,
           price: i.price,
           totalPrice: i.qty * i.price
@@ -197,7 +197,7 @@ export default function Orders() {
                               <div style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 400 }}>
                                 {o.items.map((item, idx) => (
                                   <div key={idx} style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-                                    <span style={{ color: "#1A1A1A" }}>{item.qty}x {item.nameEn}</span>
+                                    <span style={{ color: "#1A1A1A" }}>{item.qty}x {item.name}</span>
                                     <span style={{ fontWeight: "bold", color: "#666" }}>₹{(item.qty * item.price).toLocaleString()}</span>
                                   </div>
                                 ))}

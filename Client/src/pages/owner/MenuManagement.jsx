@@ -27,9 +27,10 @@ export default function MenuManagement() {
   const [loading, setLoading] = useState(true);
   const [itemModal, setItemModal] = useState(null);
   const [catModal, setCatModal] = useState(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  const BLANK_ITEM = { id: null, category_id: "", name_en: "", name_hi: "", description_en: "", description_hi: "", price: "", is_veg: true, is_available: true, photo_url: "🍛" };
-  const BLANK_CAT = { id: null, name_en: "", name_hi: "", sort_order: 0 };
+  const BLANK_ITEM = { id: null, category_id: "", name: "", description: "", price: "", is_veg: true, is_available: true, photo_url: "🍛" };
+  const BLANK_CAT = { id: null, name: "", sort_order: 0 };
 
   // Load categories and items on mount
   useEffect(() => {
@@ -53,18 +54,16 @@ export default function MenuManagement() {
   };
 
   const saveItem = async (item) => {
-    if (!item.name_en || !item.name_hi || item.price === "") {
-      toast.error("❌ English/Hindi names and price are required.");
+    if (!item.name || item.price === "") {
+      toast.error("❌ Item name and price are required.");
       return;
     }
     
     try {
       const payload = {
-        name_en: item.name_en,
-        name_hi: item.name_hi,
+        name: item.name,
         category_id: item.category_id || null,
-        description_en: item.description_en || "",
-        description_hi: item.description_hi || "",
+        description: item.description || "",
         price: Number(item.price),
         photo_url: item.photo_url || "🍛",
         is_veg: item.is_veg,
@@ -113,16 +112,39 @@ export default function MenuManagement() {
     }
   };
 
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 1 * 1024 * 1024) {
+      return toast.error("❌ File size exceeds 1MB limit.");
+    }
+
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    try {
+      setUploadingPhoto(true);
+      const res = await menuService.uploadItemPhoto(formData);
+      setItemModal({ ...itemModal, photo_url: res.data.url });
+      toast.success("✅ Photo uploaded successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || "❌ Failed to upload photo.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const saveCat = async (cat) => {
-    if (!cat.name_en || !cat.name_hi) {
-      toast.error("❌ Both English and Hindi category names are required.");
+    if (!cat.name) {
+      toast.error("❌ Category name is required.");
       return;
     }
 
     try {
       const payload = {
-        name_en: cat.name_en,
-        name_hi: cat.name_hi,
+        name: cat.name,
         sort_order: Number(cat.sort_order || 0),
       };
 
@@ -160,7 +182,7 @@ export default function MenuManagement() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 22, flexWrap: "wrap", gap: 12 }}>
           <div>
             <h1 style={{ fontFamily: "'Playfair Display',serif", fontSize: 28, fontWeight: 900, marginBottom: 4 }}>Menu Management</h1>
-            <p style={{ fontSize: 13, color: "#999" }}>Configure your restaurant catalog, bilingual items, pricing, and active categories.</p>
+            <p style={{ fontSize: 13, color: "#999" }}>Configure your restaurant catalog, menu items, pricing, and active categories.</p>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button className="btn-secondary" onClick={() => setCatModal(BLANK_CAT)}>📂 + Category</button>
@@ -177,8 +199,8 @@ export default function MenuManagement() {
               return (
                 <div key={c.id} className="card" style={{ padding: "12px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }} onClick={() => setCatModal(c)}>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A" }}>{c.name_en}</div>
-                    <div style={{ fontSize: 10, color: "#bbb" }}>{c.name_hi} · {catItemsCount} dish{catItemsCount !== 1 ? 'es' : ''}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A" }}>{c.name}</div>
+                    <div style={{ fontSize: 10, color: "#bbb" }}>{catItemsCount} dish{catItemsCount !== 1 ? 'es' : ''}</div>
                   </div>
                   <span style={{ fontSize: 11, color: "#E8650A" }}>✏️</span>
                 </div>
@@ -212,16 +234,19 @@ export default function MenuManagement() {
                     <tr key={item.id} className="table-row" style={{ borderBottom: "1px solid #f5ede5" }}>
                       <td style={{ padding: "12px 14px" }}>
                         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                          <span style={{ fontSize: 20 }}>{item.photo_url || "🍛"}</span>
+                          {item.photo_url && item.photo_url.startsWith('http') ? (
+                            <img src={item.photo_url} alt={item.name} style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
+                          ) : (
+                            <span style={{ fontSize: 20 }}>{item.photo_url || "🍛"}</span>
+                          )}
                           <div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A" }}>{item.name_en}</div>
-                            <div style={{ fontSize: 10, color: "#bbb" }}>{item.name_hi}</div>
-                            {item.description_en && <div style={{ fontSize: 10, color: "#999", marginTop: 2 }}>{item.description_en}</div>}
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A" }}>{item.name}</div>
+                            {item.description && <div style={{ fontSize: 10, color: "#999", marginTop: 2 }}>{item.description}</div>}
                           </div>
                         </div>
                       </td>
                       <td style={{ padding: "12px 14px", fontSize: 12, color: "#666" }}>
-                        {cat ? cat.name_en : <em style={{ color: "#bbb" }}>Uncategorized</em>}
+                        {cat ? cat.name : <em style={{ color: "#bbb" }}>Uncategorized</em>}
                       </td>
                       <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 800, color: "#1A1A1A" }}>₹{item.price}</td>
                       <td style={{ padding: "12px 14px" }}>
@@ -254,14 +279,10 @@ export default function MenuManagement() {
             <div className="card" style={{ maxWidth: 500, width: "100%", padding: "26px", animation: "modalIn 0.25s ease-out" }}>
               <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, fontWeight: 800, marginBottom: 18 }}>{itemModal.id ? "🍔 Edit Menu Dish" : "🍔 Add New Menu Dish"}</div>
               
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginBottom: 12 }}>
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>English Title *</label>
-                  <input value={itemModal.name_en} onChange={e => setItemModal({ ...itemModal, name_en: e.target.value })} placeholder="e.g. Butter Naan" style={inputStyle(!itemModal.name_en)} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Hindi Title *</label>
-                  <input value={itemModal.name_hi} onChange={e => setItemModal({ ...itemModal, name_hi: e.target.value })} placeholder="उदा. बटर नान" style={inputStyle(!itemModal.name_hi)} />
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Item Title *</label>
+                  <input value={itemModal.name || ""} onChange={e => setItemModal({ ...itemModal, name: e.target.value })} placeholder="e.g. Butter Naan" style={inputStyle(!itemModal.name)} />
                 </div>
               </div>
 
@@ -270,7 +291,7 @@ export default function MenuManagement() {
                   <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Category</label>
                   <select value={itemModal.category_id || ""} onChange={e => setItemModal({ ...itemModal, category_id: e.target.value })} style={selectStyle}>
                     <option value="">Uncategorized</option>
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name_en}</option>)}
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
                 <div>
@@ -280,18 +301,24 @@ export default function MenuManagement() {
               </div>
 
               <div style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>English Description</label>
-                <input value={itemModal.description_en || ""} onChange={e => setItemModal({ ...itemModal, description_en: e.target.value })} placeholder="Brief description in English" style={inputStyle()} />
-              </div>
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Hindi Description</label>
-                <input value={itemModal.description_hi || ""} onChange={e => setItemModal({ ...itemModal, description_hi: e.target.value })} placeholder="संक्षिप्त विवरण हिंदी में" style={inputStyle()} />
+                <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Description</label>
+                <input value={itemModal.description || ""} onChange={e => setItemModal({ ...itemModal, description: e.target.value })} placeholder="Brief description of the item" style={inputStyle()} />
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 0.8fr", gap: 12, marginBottom: 20, alignItems: "center" }}>
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Emoji Photo</label>
-                  <input value={itemModal.photo_url || "🍛"} onChange={e => setItemModal({ ...itemModal, photo_url: e.target.value })} style={inputStyle()} />
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Food Photo</label>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {itemModal.photo_url && itemModal.photo_url.startsWith('http') ? (
+                      <img src={itemModal.photo_url} alt="Preview" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
+                    ) : (
+                      <span style={{ fontSize: 24 }}>{itemModal.photo_url || "🍛"}</span>
+                    )}
+                    <label style={{ cursor: "pointer", background: "#f5ede5", color: "#E8650A", padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 700 }}>
+                      {uploadingPhoto ? "..." : "Upload"}
+                      <input type="file" accept="image/*" onChange={handlePhotoUpload} style={{ display: "none" }} disabled={uploadingPhoto} />
+                    </label>
+                  </div>
                 </div>
                 <div style={{ display: "flex", gap: 6, marginTop: 15 }}>
                   <input type="checkbox" id="isVeg" checked={itemModal.is_veg} onChange={e => setItemModal({ ...itemModal, is_veg: e.target.checked })} style={{ cursor: "pointer" }} />
@@ -321,12 +348,8 @@ export default function MenuManagement() {
               <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, fontWeight: 800, marginBottom: 18 }}>{catModal.id ? "📂 Edit Category" : "📂 Add New Category"}</div>
               
               <div style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>English Name *</label>
-                <input value={catModal.name_en || ""} onChange={e => setCatModal({ ...catModal, name_en: e.target.value })} placeholder="e.g. Main Course" style={inputStyle(!catModal.name_en)} />
-              </div>
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Hindi Name *</label>
-                <input value={catModal.name_hi || ""} onChange={e => setCatModal({ ...catModal, name_hi: e.target.value })} placeholder="उदा. मुख्य व्यंजन" style={inputStyle(!catModal.name_hi)} />
+                <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Category Name *</label>
+                <input value={catModal.name || ""} onChange={e => setCatModal({ ...catModal, name: e.target.value })} placeholder="e.g. Main Course" style={inputStyle(!catModal.name)} />
               </div>
               <div style={{ marginBottom: 20 }}>
                 <label style={{ fontSize: 11, fontWeight: 700, color: "#666", display: "block", marginBottom: 5 }}>Sorting Order Weight (Numeric)</label>

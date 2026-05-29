@@ -78,7 +78,7 @@ export default function Plans() {
               <div style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", marginBottom: 24 }}>First {plan.trial} days free for all new signups</div>
 
               <div style={{ marginBottom: 24 }}>
-                {["Unlimited menu items & categories", "English + Hindi bilingual menu", "Unique QR code", "UPI QR & Razorpay payments", "Browser & Thermal print receipts", "Sales analytics dashboard", "Real-time order notifications", "Zero delivery commission"].map((f, i) => (
+                {["Unlimited menu items & categories", "Elegant digital customer menu", "Unique QR code", "UPI QR & Razorpay payments", "Browser & Thermal print receipts", "Sales analytics dashboard", "Real-time order notifications", "Zero delivery commission"].map((f, i) => (
                   <div key={i} style={{ display: "flex", gap: 10, alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     <span style={{ color: "#40916C", fontWeight: 900, fontSize: 13, flexShrink: 0 }}>✓</span>
                     <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)" }}>{f}</span>

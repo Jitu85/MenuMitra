@@ -1,12 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { io } from 'socket.io-client';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function OwnerLayout({ children, pageTitle }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user || !user.id) return;
+    
+    // Connect to backend
+    const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:4000', {
+      transports: ['websocket', 'polling']
+    });
+    
+    socket.on('connect', () => {
+      socket.emit('join_owner_room', user.id);
+    });
+
+    socket.on('new_order_received', (orderData) => {
+      toast.custom((t) => (
+        <div style={{ background: '#2D6A4F', color: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+          <div style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 4 }}>🚨 New Order: {orderData.orderNumber}</div>
+          <div style={{ fontSize: 13 }}>Table: {orderData.tableNumber} | Total: ₹{orderData.totalAmount}</div>
+          <button onClick={() => { navigate('/dashboard/orders'); toast.dismiss(t.id); }} style={{ marginTop: 8, background: 'white', color: '#2D6A4F', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+            View Order
+          </button>
+        </div>
+      ), { duration: 6000, position: 'top-right' });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user, navigate]);
 
   // Fallback info if user is not fully loaded
   const businessName = user?.businessName || user?.business_name || "My Restaurant Outlet";
@@ -35,6 +66,7 @@ export default function OwnerLayout({ children, pageTitle }) {
 
   return (
     <div className="owner-layout-wrapper" style={{ display: "flex", minHeight: "100vh", background: "#F5EFE8", fontFamily: "'DM Sans',sans-serif", color: "#1A1A1A" }}>
+      <Toaster position="top-right" />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,600&family=DM+Sans:wght@300;400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

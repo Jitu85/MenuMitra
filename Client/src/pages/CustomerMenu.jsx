@@ -4,102 +4,55 @@ import api from "../services/api";
 import toast, { Toaster } from "react-hot-toast";
 
 // ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
-const T = {
-  en: {
-    scanOrder: "Scan & Order",
-    selectTable: "Select Your Table",
-    tableLabel: "Table Number",
-    tablePlaceholder: "Choose table…",
-    yourName: "Your Name (Optional)",
-    namePlaceholder: "e.g. Rahul",
-    notes: "Special Instructions",
-    notesPlaceholder: "Any allergies or requests…",
-    addToCart: "Add",
-    cart: "Your Order",
-    emptyCart: "Your cart is empty",
-    emptyCartSub: "Add items from the menu above",
-    subtotal: "Subtotal",
-    placeOrder: "Place Order",
-    payNow: "Pay Now",
-    choosePayment: "Choose Payment Method",
-    payUpi: "Pay via UPI QR",
-    payRazorpay: "Pay via Razorpay",
-    upiInstructions: "Scan the QR code below using any UPI app",
-    upiId: "UPI ID",
-    iHavePaid: "I Have Paid ✓",
-    orderPlaced: "Order Placed!",
-    orderConfirmed: "Payment Confirmed",
-    orderNumber: "Order Number",
-    thankYou: "Thank you for ordering!",
-    thankYouSub: "Your order has been received. Food is being prepared.",
-    items: "items",
-    veg: "VEG",
-    nonVeg: "NON-VEG",
-    popular: "Popular",
-    search: "Search dishes…",
-    allDay: "All Day Menu",
-    tableRequired: "Please select a table number before placing your order.",
-    processing: "Processing…",
-    orderSummary: "Order Summary",
-    backToMenu: "← Back to Menu",
-    newOrder: "Place New Order",
-    tableNo: "Table No.",
-    total: "Total",
-  },
-  hi: {
-    scanOrder: "स्कैन और ऑर्डर करें",
-    selectTable: "अपनी मेज चुनें",
-    tableLabel: "मेज नंबर",
-    tablePlaceholder: "मेज चुनें…",
-    yourName: "आपका नाम (वैकल्पिक)",
-    namePlaceholder: "जैसे राहुल",
-    notes: "विशेष निर्देश",
-    notesPlaceholder: "कोई एलर्जी या अनुरोध…",
-    addToCart: "जोड़ें",
-    cart: "आपका ऑर्डर",
-    emptyCart: "आपकी कार्ट खाली है",
-    emptyCartSub: "ऊपर मेनू से आइटम जोड़ें",
-    subtotal: "कुल राशि",
-    placeOrder: "ऑर्डर करें",
-    payNow: "भुगतान करें",
-    choosePayment: "भुगतान का तरीका चुनें",
-    payUpi: "UPI QR से भुगतान",
-    payRazorpay: "Razorpay से भुगतान",
-    upiInstructions: "किसी भी UPI ऐप से नीचे दिया QR स्कैन करें",
-    upiId: "UPI आईडी",
-    iHavePaid: "मैंने भुगतान कर दिया ✓",
-    orderPlaced: "ऑर्डर हो गया!",
-    orderConfirmed: "भुगतान की पुष्टि हुई",
-    orderNumber: "ऑर्डर नंबर",
-    thankYou: "ऑर्डर के लिए धन्यवाद!",
-    thankYouSub: "आपका ऑर्डर मिल गया है। खाना तैयार हो रहा है।",
-    items: "आइटम",
-    veg: "शाकाहारी",
-    nonVeg: "मांसाहारी",
-    popular: "लोकप्रिय",
-    search: "व्यंजन खोजें…",
-    allDay: "पूरे दिन का मेनू",
-    tableRequired: "ऑर्डर देने से पहले कृपया मेज नंबर चुनें।",
-    processing: "प्रक्रिया हो रही है…",
-    orderSummary: "ऑर्डर सारांश",
-    backToMenu: "← मेनू पर वापस",
-    newOrder: "नया ऑर्डर करें",
-    tableNo: "मेज नं.",
-    total: "कुल",
-  }
+const t = {
+  scanOrder: "Scan & Order",
+  selectTable: "Select Your Table",
+  tableLabel: "Table Number",
+  tablePlaceholder: "Choose table…",
+  yourName: "Your Name (Optional)",
+  namePlaceholder: "e.g. Rahul",
+  notes: "Special Instructions",
+  notesPlaceholder: "Any allergies or requests…",
+  addToCart: "Add",
+  cart: "Your Order",
+  emptyCart: "Your cart is empty",
+  emptyCartSub: "Add items from the menu above",
+  subtotal: "Subtotal",
+  placeOrder: "Place Order",
+  payNow: "Pay Now",
+  choosePayment: "Choose Payment Method",
+  payUpi: "Pay via UPI QR",
+  payRazorpay: "Pay via Razorpay",
+  upiInstructions: "Scan the QR code below using any UPI app",
+  upiId: "UPI ID",
+  iHavePaid: "I Have Paid ✓",
+  orderPlaced: "Order Placed!",
+  orderConfirmed: "Payment Confirmed",
+  orderNumber: "Order Number",
+  thankYou: "Thank you for ordering!",
+  thankYouSub: "Your order has been received. Food is being prepared.",
+  items: "items",
+  veg: "VEG",
+  nonVeg: "NON-VEG",
+  popular: "Popular",
+  search: "Search dishes…",
+  allDay: "All Day Menu",
+  tableRequired: "Please select a table number before placing your order.",
+  processing: "Processing…",
+  orderSummary: "Order Summary",
+  backToMenu: "← Back to Menu",
+  newOrder: "Place New Order",
+  tableNo: "Table No.",
+  total: "Total",
 };
 
 export default function CustomerMenu() {
   const { slug } = useParams();
-  const [lang, setLang] = useState("en");
-  const t = T[lang];
 
   // Menu states
   const [business, setBusiness] = useState({
     name: "Sharma's Dhaba",
-    nameHi: "शर्मा का ढाबा",
     tagline: "Home-style food with love",
-    taglineHi: "घर जैसा खाना, प्यार के साथ",
     city: "Patna",
     state: "Bihar",
     tableCount: 12,
@@ -109,25 +62,25 @@ export default function CustomerMenu() {
   });
 
   const [categories, setCategories] = useState([
-    { id: "all", nameEn: "All", nameHi: "सभी" },
-    { id: "CAT1", nameEn: "Main Course", nameHi: "मुख्य व्यंजन" },
-    { id: "CAT2", nameEn: "Breads", nameHi: "रोटी" },
-    { id: "CAT3", nameEn: "Beverages", nameHi: "पेय पदार्थ" },
-    { id: "CAT4", nameEn: "Starters", nameHi: "स्टार्टर" },
-    { id: "CAT5", nameEn: "Desserts", nameHi: "मिठाई" },
+    { id: "all", name: "All" },
+    { id: "CAT1", name: "Main Course" },
+    { id: "CAT2", name: "Breads" },
+    { id: "CAT3", name: "Beverages" },
+    { id: "CAT4", name: "Starters" },
+    { id: "CAT5", name: "Desserts" },
   ]);
 
   const [items, setItems] = useState([
-    { id: "I1", cat: "CAT1", nameEn: "Dal Makhani", nameHi: "दाल मखनी", descEn: "Creamy black lentil curry", descHi: "मलाईदार काली दाल करी", price: 180, veg: true, photo: "🍛", popular: true },
-    { id: "I2", cat: "CAT1", nameEn: "Paneer Butter Masala", nameHi: "पनीर बटर मसाला", descEn: "Cottage cheese in rich tomato gravy", descHi: "पनीर टमाटर की ग्रेवी", price: 220, veg: true, photo: "🧆", popular: true },
-    { id: "I3", cat: "CAT1", nameEn: "Chicken Curry", nameHi: "चिकन करी", descEn: "Traditional homestyle chicken curry", descHi: "देसी चिकन करी", price: 280, veg: false, photo: "🍗", popular: false },
-    { id: "I4", cat: "CAT1", nameEn: "Mutton Rogan Josh", nameHi: "मटन रोगन जोश", descEn: "Slow-cooked mutton in aromatic spices", descHi: "मसालेदार मटन", price: 380, veg: false, photo: "🥘", popular: false },
-    { id: "I5", cat: "CAT2", nameEn: "Butter Naan", nameHi: "बटर नान", descEn: "Soft leavened bread with butter", descHi: "मक्खन के साथ नरम नान", price: 40, veg: true, photo: "🫓", popular: true },
-    { id: "I6", cat: "CAT2", nameEn: "Tandoori Roti", nameHi: "तंदूरी रोटी", descEn: "Whole wheat bread from tandoor", descHi: "तंदूर की गेहूं की रोटी", price: 25, veg: true, photo: "🫓", popular: false },
-    { id: "I8", cat: "CAT3", nameEn: "Masala Chai", nameHi: "मसाला चाय", descEn: "Indian spiced milk tea", descHi: "भारतीय मसाला चाय", price: 30, veg: true, photo: "☕", popular: true },
-    { id: "I9", cat: "CAT3", nameEn: "Lassi (Sweet)", nameHi: "मीठी लस्सी", descEn: "Chilled sweet yoghurt drink", descHi: "ठंडी मीठी लस्सी", price: 60, veg: true, photo: "🥛", popular: false },
-    { id: "I11", cat: "CAT4", nameEn: "Paneer Tikka", nameHi: "पनीर टिक्का", descEn: "Grilled cottage cheese with spices", descHi: "मसालेदार ग्रिल्ड पनीर", price: 240, veg: true, photo: "🧆", popular: true },
-    { id: "I13", cat: "CAT5", nameEn: "Gulab Jamun", nameHi: "गुलाब जामुन", descEn: "Soft milk dumplings in sugar syrup", descHi: "चाशनी में मीठे गुलाब जामुन", price: 80, veg: true, photo: "🍮", popular: false },
+    { id: "I1", cat: "CAT1", name: "Dal Makhani", description: "Creamy black lentil curry", price: 180, veg: true, photo: "🍛", popular: true },
+    { id: "I2", cat: "CAT1", name: "Paneer Butter Masala", description: "Cottage cheese in rich tomato gravy", price: 220, veg: true, photo: "🧆", popular: true },
+    { id: "I3", cat: "CAT1", name: "Chicken Curry", description: "Traditional homestyle chicken curry", price: 280, veg: false, photo: "🍗", popular: false },
+    { id: "I4", cat: "CAT1", name: "Mutton Rogan Josh", description: "Slow-cooked mutton in aromatic spices", price: 380, veg: false, photo: "🥘", popular: false },
+    { id: "I5", cat: "CAT2", name: "Butter Naan", description: "Soft leavened bread with butter", price: 40, veg: true, photo: "🫓", popular: true },
+    { id: "I6", cat: "CAT2", name: "Tandoori Roti", description: "Whole wheat bread from tandoor", price: 25, veg: true, photo: "🫓", popular: false },
+    { id: "I8", cat: "CAT3", name: "Masala Chai", description: "Indian spiced milk tea", price: 30, veg: true, photo: "☕", popular: true },
+    { id: "I9", cat: "CAT3", name: "Lassi (Sweet)", description: "Chilled sweet yoghurt drink", price: 60, veg: true, photo: "🥛", popular: false },
+    { id: "I11", cat: "CAT4", name: "Paneer Tikka", description: "Grilled cottage cheese with spices", price: 240, veg: true, photo: "🧆", popular: true },
+    { id: "I13", cat: "CAT5", name: "Gulab Jamun", description: "Soft milk dumplings in sugar syrup", price: 80, veg: true, photo: "🍮", popular: false },
   ]);
 
   // Loading and error states
@@ -159,9 +112,7 @@ export default function CustomerMenu() {
           setBusiness({
             id: data.id,
             name: data.businessName,
-            nameHi: data.businessName,
             tagline: data.businessType ? `Authentic ${data.businessType}` : "Delicious freshly made food",
-            taglineHi: data.businessType ? `${data.businessType} का असली स्वाद` : "स्वादिष्ट ताज़ा भोजन",
             city: data.city,
             state: data.state || "",
             tableCount: data.tableCount || 12,
@@ -173,10 +124,9 @@ export default function CustomerMenu() {
           if (data.categories && data.categories.length > 0) {
             const serverCats = data.categories.map(c => ({
               id: c.id,
-              nameEn: c.nameEn,
-              nameHi: c.nameHi
+              name: c.name
             }));
-            setCategories([{ id: "all", nameEn: "All", nameHi: "सभी" }, ...serverCats]);
+            setCategories([{ id: "all", name: "All" }, ...serverCats]);
 
             // Flatten all food items inside the categories
             const serverItems = [];
@@ -186,10 +136,8 @@ export default function CustomerMenu() {
                   serverItems.push({
                     id: item.id,
                     cat: c.id,
-                    nameEn: item.nameEn,
-                    nameHi: item.nameHi,
-                    descEn: item.descriptionEn || "",
-                    descHi: item.descriptionHi || "",
+                    name: item.name,
+                    description: item.description || "",
                     price: parseFloat(item.price),
                     veg: item.isVeg,
                     photo: item.photoUrl || "🍛",
@@ -261,8 +209,7 @@ export default function CustomerMenu() {
       const item = items.find(i => i.id === itemId);
       return {
         id: itemId,
-        nameEn: item.nameEn,
-        nameHi: item.nameHi,
+        name: item.name,
         price: item.price,
         qty: qty
       };
@@ -280,8 +227,7 @@ export default function CustomerMenu() {
         quantity: item.qty,
         unit_price: item.price
       })),
-      notes: specialNotes,
-      language_used: lang
+      notes: specialNotes
     };
 
     try {
@@ -326,8 +272,7 @@ export default function CustomerMenu() {
   const filteredItems = items.filter(item => {
     const matchCat = activeCat === "all" || item.cat === activeCat;
     const matchSearch = !searchQuery || 
-      item.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      item.nameHi.includes(searchQuery);
+      item.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchVeg = !vegOnly || item.veg;
     return matchCat && matchSearch && matchVeg;
   });
@@ -337,7 +282,7 @@ export default function CustomerMenu() {
       <div style={{ minHeight: "100vh", backgroundColor: "#0F0F0F", display: "flex", justifyContent: "center", alignItems: "center", color: "white" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: "40px", marginBottom: "16px", animation: "spin 2s linear infinite" }}>⏳</div>
-          <div style={{ fontSize: "16px", fontWeight: "bold" }}>Preparing Bilingual Menu...</div>
+          <div style={{ fontSize: "16px", fontWeight: "bold" }}>Preparing Menu...</div>
         </div>
       </div>
     );
@@ -413,7 +358,7 @@ export default function CustomerMenu() {
           background: #c0392b;
         }
 
-        /* Mobile adjustments for Bilingual Customer Menu */
+        /* Mobile adjustments for Customer Menu */
         @media (max-width: 600px) {
           .customer-menu-header {
             padding: 16px 12px !important;
@@ -448,15 +393,12 @@ export default function CustomerMenu() {
         <div>
           <span style={{ fontSize: "11px", fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255, 255, 255, 0.75)" }}>{t.scanOrder}</span>
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "28px", fontWeight: 900, lineHeight: 1.1, margin: "4px 0 2px" }}>
-            {lang === "hi" ? business.nameHi : business.name}
+            {business.name}
           </h1>
           <p style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.85)" }}>
-            {lang === "hi" ? business.taglineHi : business.tagline}
+            {business.tagline}
           </p>
         </div>
-        <button onClick={() => setLang(lang === "en" ? "hi" : "en")} style={{ border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.15)", color: "white", padding: "6px 14px", borderRadius: "50px", fontWeight: 800, cursor: "pointer", fontSize: "12px" }}>
-          🌐 {lang === "en" ? "हिंदी" : "English"}
-        </button>
       </header>
 
       {/* RENDER SUCCESS RECEIPT */}
@@ -476,7 +418,7 @@ export default function CustomerMenu() {
               <div style={{ height: "1px", background: "#f0e8df", margin: "10px 0" }} />
               {completedOrder.items.map((item, idx) => (
                 <div key={idx} style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", margin: "4px 0" }}>
-                  <span>{lang === "hi" ? item.nameHi : item.nameEn} x {item.qty}</span>
+                  <span>{item.name} x {item.qty}</span>
                   <span style={{ fontWeight: 700 }}>₹{item.price * item.qty}</span>
                 </div>
               ))}
@@ -564,7 +506,7 @@ export default function CustomerMenu() {
           <div style={{ display: "flex", gap: "8px", overflowX: "auto", paddingBottom: "12px", marginBottom: "20px" }}>
             {categories.map(c => (
               <button key={c.id} className={`cat-pill ${activeCat === c.id ? 'active' : ''}`} onClick={() => setActiveCat(c.id)}>
-                {lang === "hi" ? c.nameHi : c.nameEn}
+                {c.name}
               </button>
             ))}
           </div>
@@ -582,13 +524,13 @@ export default function CustomerMenu() {
                       <div className={item.veg ? "badge-veg" : "badge-nonveg"}>
                         <div className={item.veg ? "badge-veg-dot" : "badge-nonveg-dot"} />
                       </div>
-                      <span style={{ fontSize: "14px", fontWeight: 800 }}>{lang === "hi" ? item.nameHi : item.nameEn}</span>
+                      <span style={{ fontSize: "14px", fontWeight: 800 }}>{item.name}</span>
                       {item.popular && (
                         <span style={{ background: "rgba(232,101,10,0.12)", color: "#E8650A", fontSize: "9px", padding: "2px 6px", borderRadius: "4px", fontWeight: 800 }}>{t.popular}</span>
                       )}
                     </div>
                     <p style={{ fontSize: "11px", color: "#888", marginTop: "4px" }}>
-                      {lang === "hi" ? item.descHi : item.descEn}
+                      {item.description}
                     </p>
                     <div style={{ fontSize: "14px", fontWeight: 900, color: "#E8650A", marginTop: "6px" }}>₹{item.price}</div>
                   </div>
