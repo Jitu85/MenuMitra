@@ -1,6 +1,21 @@
 import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
 
 export default function Landing() {
+
+  // Load Razorpay embed button script
+  useEffect(() => {
+    if (!document.getElementById('razorpay-embed-btn-js')) {
+      const s = document.createElement('script');
+      s.defer = true;
+      s.id = 'razorpay-embed-btn-js';
+      s.src = 'https://cdn.razorpay.com/static/embed_btn/bundle.js';
+      document.body.appendChild(s);
+    } else {
+      const rzp = window['__rzp__'];
+      if (rzp && rzp.init) rzp.init();
+    }
+  }, []);
 
   const content = {
     welcome: "Welcome to MenuMitra",
@@ -363,9 +378,19 @@ export default function Landing() {
                   </div>
                 ))}
               </div>
-              <Link to="/signup" className="glow-btn" style={{ display: "block", textAlign: "center", padding: "14px", borderRadius: "50px", textDecoration: "none", color: "white", fontSize: "14px", fontWeight: 800 }}>
-                Get Started
+              <Link to="/signup" className="glow-btn" style={{ display: "block", textAlign: "center", padding: "14px", borderRadius: "50px", textDecoration: "none", color: "white", fontSize: "14px", fontWeight: 800, marginBottom: 12 }}>
+                Start Free Trial
               </Link>
+              {/* Razorpay Subscribe Button */}
+              <div style={{ textAlign: 'center' }}>
+                <div
+                  className="razorpay-embed-btn"
+                  data-url="https://pages.razorpay.com/pl_SvCPlnDwmb2zKY/view"
+                  data-text="Subscribe Now — ₹100/mo"
+                  data-color="#E8650A"
+                  data-size="medium"
+                />
+              </div>
             </div>
           </div>
         </div>

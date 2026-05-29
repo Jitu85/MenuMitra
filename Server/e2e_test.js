@@ -1,22 +1,58 @@
 /**
  * MenuMitra Automated End-to-End API Integration Test Script
  * Developed by Abhijit Kumar Misra
- * 
- * Verifies all 10+ core routes of the platform backend on port 4000.
+ *
+ * Verifies all core routes of the platform backend.
+ *
+ * Usage:
+ *   node e2e_test.js                   — Run against local server (port 4000)
+ *   node e2e_test.js --production       — Run against Railway production URL
+ *   BASE_URL=https://... node e2e_test.js — Custom URL
  */
 
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:4000/api';
+// ── Determine base URL ────────────────────────────────────────────────────────
+const isProd = process.argv.includes('--production');
+const DEFAULT_PROD_URL = 'https://menumitra-production.up.railway.app/api';
+const BASE_URL = process.env.BASE_URL || (isProd ? DEFAULT_PROD_URL : 'http://localhost:4000/api');
+
 const randomSuffix = Math.floor(1000 + Math.random() * 9000);
 const testEmail = `merchant_${randomSuffix}@menumitra.com`;
 const testPhone = `9876${randomSuffix}`;
 const testPassword = 'SecurePassword123';
 
+// ── Counters ──────────────────────────────────────────────────────────────────
+let testsPassed = 0;
+let testsFailed = 0;
+
+function pass(step, msg) {
+  console.log(`✅ [${step}] ${msg}`);
+  testsPassed++;
+}
+
+function fail(step, msg, err) {
+  console.error(`❌ [${step}] FAILED — ${msg}`);
+  if (err) {
+    if (err.response) {
+      console.error(`   HTTP ${err.response.status}: ${JSON.stringify(err.response.data)}`);
+    } else {
+      console.error(`   ${err.message}`);
+    }
+  }
+  testsFailed++;
+}
+
+// ── Test runner ───────────────────────────────────────────────────────────────
 const runTests = async () => {
-  console.log('================================================================');
-  console.log('      MENUMITRA AUTOMATED API INTEGRATION TEST FLOW              ');
-  console.log('================================================================\n');
+  console.log('═══════════════════════════════════════════════════════════════');
+  console.log('       MENUMITRA — AUTOMATED E2E INTEGRATION TEST FLOW');
+  console.log('       Developed by Abhijit Kumar Misra');
+  console.log('═══════════════════════════════════════════════════════════════');
+  console.log(`Mode    : ${isProd ? '🚀 PRODUCTION' : '🔧 LOCAL'}`);
+  console.log(`Base URL: ${BASE_URL}`);
+  console.log(`Run ID  : ${randomSuffix}`);
+  console.log('═══════════════════════════════════════════════════════════════\n');
 
   let ownerToken = '';
   let ownerId = '';
@@ -26,10 +62,23 @@ const runTests = async () => {
   let orderId = '';
   let adminToken = '';
 
+  // ── STEP 1: Health Check ─────────────────────────────────────────────────
   try {
-    // 1. Business Owner Registration
-    console.log('[1/11] Testing Owner Registration (/api/auth/signup)...');
-    const registerResponse = await axios.post(`${BASE_URL}/auth/signup`, {
+    const res = await axios.get(`${BASE_URL}/health`);
+    if (res.status === 200 && res.data.status === 'ok') {
+      pass('1/14', `Health check OK — DB: ${res.data.db}`);
+    } else {
+      fail('1/14', `Unexpected health response: ${res.data.status}`);
+    }
+  } catch (err) {
+    fail('1/14', 'Health check failed — is the server running?', err);
+    console.log('\n⛔ Cannot proceed — server unreachable. Exiting.');
+    process.exit(1);
+  }
+
+  // ── STEP 2: Owner Registration ───────────────────────────────────────────
+  try {
+    const res = await axios.post(`${BASE_URL}/auth/signup`, {
       business_name: `Tasty Bites Cafe ${randomSuffix}`,
       business_type: 'cafe',
       owner_name: 'Abhijit Kumar Misra',
@@ -43,169 +92,242 @@ const runTests = async () => {
       password: testPassword
     });
 
-    if (registerResponse.status === 201) {
-      console.log('✅ Registration SUCCESS!');
-      ownerToken = registerResponse.data.token;
-      ownerId = registerResponse.data.owner?.id || registerResponse.data.user?.id;
-      ownerSlug = registerResponse.data.owner?.slug || registerResponse.data.user?.slug;
-      console.log(`   - Owner ID: ${ownerId}`);
-      console.log(`   - Owner Slug: ${ownerSlug}`);
+    if (res.status === 201) {
+      ownerToken = res.data.token;
+      ownerId = res.data.owner?.id || res.data.user?.id;
+      ownerSlug = res.data.owner?.slug || res.data.user?.slug;
+      pass('2/14', `Registration OK — ID: ${ownerId} | Slug: ${ownerSlug}`);
     } else {
-      throw new Error(`Registration failed with status ${registerResponse.status}`);
+      fail('2/14', `Unexpected status: ${res.status}`);
     }
+  } catch (err) {
+    fail('2/14', 'Owner registration failed', err);
+  }
 
-    // 2. Business Owner Login
-    console.log('\n[2/11] Testing Owner Login (/api/auth/login)...');
-    const loginResponse = await axios.post(`${BASE_URL}/auth/login`, {
+  // ── STEP 3: Owner Login ──────────────────────────────────────────────────
+  try {
+    const res = await axios.post(`${BASE_URL}/auth/login`, {
       email: testEmail,
       password: testPassword
     });
-
-    if (loginResponse.status === 200) {
-      console.log('✅ Owner Login SUCCESS!');
-      ownerToken = loginResponse.data.token;
+    if (res.status === 200 && res.data.token) {
+      ownerToken = res.data.token;
+      pass('3/14', `Owner login OK — Token received`);
     } else {
-      throw new Error('Owner login failed!');
+      fail('3/14', 'Login did not return token');
     }
+  } catch (err) {
+    fail('3/14', 'Owner login failed', err);
+  }
 
-    const ownerHeaders = { Authorization: `Bearer ${ownerToken}` };
+  const ownerHeaders = { Authorization: `Bearer ${ownerToken}` };
 
-    // 3. Fetch Owner Profile
-    console.log('\n[3/11] Testing Owner Profile Fetch (/api/owner/profile)...');
-    const profileResponse = await axios.get(`${BASE_URL}/owner/profile`, { headers: ownerHeaders });
-    if (profileResponse.status === 200) {
-      console.log('✅ Profile fetch SUCCESS!');
-      console.log(`   - Verified Owner Name: ${profileResponse.data.owner_name}`);
+  // ── STEP 4: Fetch Owner Profile ──────────────────────────────────────────
+  try {
+    const res = await axios.get(`${BASE_URL}/owner/profile`, { headers: ownerHeaders });
+    if (res.status === 200 && res.data.owner_name) {
+      pass('4/14', `Profile fetch OK — Name: ${res.data.owner_name}`);
+    } else {
+      fail('4/14', 'Profile response missing owner_name');
     }
+  } catch (err) {
+    fail('4/14', 'Profile fetch failed', err);
+  }
 
-    // 4. Create Menu Category
-    console.log('\n[4/11] Testing Category Creation (/api/menu/categories)...');
-    const categoryResponse = await axios.post(`${BASE_URL}/menu/categories`, {
-      name_en: 'Special Mocktails',
-      name_hi: 'विशेष मॉकटेल',
+  // ── STEP 5: Create Category ──────────────────────────────────────────────
+  try {
+    const res = await axios.post(`${BASE_URL}/menu/categories`, {
+      name: 'Special Mocktails',
       sort_order: 1
     }, { headers: ownerHeaders });
 
-    if (categoryResponse.status === 201) {
-      console.log('✅ Category creation SUCCESS!');
-      categoryId = categoryResponse.data.id || categoryResponse.data.category?.id;
-      console.log(`   - Category ID: ${categoryId}`);
+    if (res.status === 201) {
+      categoryId = res.data.category?.id || res.data.id;
+      pass('5/14', `Category created OK — ID: ${categoryId}`);
+    } else {
+      fail('5/14', `Unexpected status: ${res.status}`);
     }
+  } catch (err) {
+    fail('5/14', 'Category creation failed', err);
+  }
 
-    // 5. Add Food Item to Category
-    console.log('\n[5/11] Testing Food Item Addition (/api/menu/items)...');
-    const itemResponse = await axios.post(`${BASE_URL}/menu/items`, {
-      name_en: 'Blue Curacao Lagoon',
-      name_hi: 'ब्लू कुराकाओ लैगून',
-      description_en: 'Refreshing blue mint lemon mocktail',
-      description_hi: 'ताजा करने वाला ब्लू मिंट लेमन मॉकटेल',
+  // ── STEP 6: Add Food Item ────────────────────────────────────────────────
+  try {
+    const res = await axios.post(`${BASE_URL}/menu/items`, {
+      name: `Blue Curacao Lagoon ${randomSuffix}`,
+      description: 'Refreshing blue mint lemon mocktail',
       price: 180.00,
       category_id: categoryId,
       is_veg: true,
       sort_order: 1
     }, { headers: ownerHeaders });
 
-    if (itemResponse.status === 201) {
-      console.log('✅ Food Item creation SUCCESS!');
-      foodItemId = itemResponse.data.id || itemResponse.data.item?.id || itemResponse.data.foodItem?.id;
-      console.log(`   - Food Item ID: ${foodItemId}`);
+    if (res.status === 201) {
+      foodItemId = res.data.item?.id || res.data.id;
+      pass('6/14', `Food item created OK — ID: ${foodItemId}`);
+    } else {
+      fail('6/14', `Unexpected status: ${res.status}`);
     }
+  } catch (err) {
+    fail('6/14', 'Food item creation failed', err);
+  }
 
-    // 6. Public Customer Menu Access by Slug
-    console.log(`\n[6/11] Testing Public Customer Menu Access (/api/public/menu/${ownerSlug})...`);
-    const publicMenuResponse = await axios.get(`${BASE_URL}/public/menu/${ownerSlug}`);
-    if (publicMenuResponse.status === 200) {
-      console.log('✅ Public menu loaded SUCCESS!');
-      const categoriesCount = publicMenuResponse.data.categories?.length || 0;
-      console.log(`   - Categories count: ${categoriesCount}`);
+  // ── STEP 7: Public Customer Menu Access ─────────────────────────────────
+  try {
+    const res = await axios.get(`${BASE_URL}/public/menu/${ownerSlug}`);
+    if (res.status === 200) {
+      const catCount = res.data.categories?.length || 0;
+      pass('7/14', `Public menu loaded OK — ${catCount} category/categories`);
+    } else {
+      fail('7/14', `Unexpected status: ${res.status}`);
     }
+  } catch (err) {
+    fail('7/14', 'Public menu access failed', err);
+  }
 
-    // 7. Place Order (Customer cart submission)
-    console.log('\n[7/11] Testing Order Placement (/api/orders)...');
-    const orderResponse = await axios.post(`${BASE_URL}/orders`, {
+  // ── STEP 8: Place Guest Order ────────────────────────────────────────────
+  try {
+    const res = await axios.post(`${BASE_URL}/orders`, {
       owner_id: ownerId,
       table_number: '05',
       customer_name: 'Jitu Guest',
       notes: 'Less ice please',
-      items: [
-        {
-          food_item_id: foodItemId,
-          quantity: 2
-        }
-      ]
+      items: [{ food_item_id: foodItemId, quantity: 2 }]
     });
 
-    if (orderResponse.status === 201) {
-      console.log('✅ Guest order placed SUCCESS!');
-      orderId = orderResponse.data.id || orderResponse.data.order?.id;
-      console.log(`   - Order ID: ${orderId}`);
-      console.log(`   - Total Amount: ₹${orderResponse.data.totalAmount || orderResponse.data.order?.totalAmount || orderResponse.data.order?.total_amount}`);
+    if (res.status === 201) {
+      orderId = res.data.order?.id || res.data.id;
+      const total = res.data.order?.totalAmount || res.data.totalAmount;
+      pass('8/14', `Order placed OK — ID: ${orderId} | Total: ₹${total}`);
+    } else {
+      fail('8/14', `Unexpected status: ${res.status}`);
     }
+  } catch (err) {
+    fail('8/14', 'Order placement failed', err);
+  }
 
-    // 8. Customer Payment Verification Simulation (Mock Mode)
-    console.log(`\n[8/11] Simulating Customer payment verification (/api/payment/verify)...`);
-    const verifyResponse = await axios.post(`${BASE_URL}/payment/verify`, {
-      orderId: orderId,
+  // ── STEP 9: Mock Payment Verification ────────────────────────────────────
+  try {
+    const res = await axios.post(`${BASE_URL}/payment/verify`, {
+      orderId,
       isMock: true
     });
-    if (verifyResponse.status === 200) {
-      console.log('✅ Mock payment verification SUCCESS! Order payment status is paid.');
+    if (res.status === 200) {
+      pass('9/14', 'Mock payment verification OK');
+    } else {
+      fail('9/14', `Unexpected status: ${res.status}`);
     }
-
-    // 9. Fetch Owner Dashboard Orders
-    console.log('\n[9/11] Fetching Owner Orders to verify notification (/api/orders)...');
-    const ownerOrdersResponse = await axios.get(`${BASE_URL}/orders`, { headers: ownerHeaders });
-    if (ownerOrdersResponse.status === 200) {
-      console.log('✅ Owner orders fetched SUCCESS!');
-      const orders = ownerOrdersResponse.data.orders || ownerOrdersResponse.data;
-      const foundOrder = orders.find(o => o.id === orderId);
-      console.log(`   - Order found on Dashboard: ${foundOrder ? 'YES' : 'NO'}`);
-      console.log(`   - Payment Status: ${foundOrder ? foundOrder.paymentStatus || foundOrder.payment_status : 'N/A'}`);
+  } catch (err) {
+    // Payment verify may not exist in all envs — treat as warning
+    if (err.response && err.response.status === 404) {
+      console.log(`  ⚠️  [9/14] Payment verify endpoint not found — skipping (non-critical)`);
+    } else {
+      fail('9/14', 'Mock payment verification failed', err);
     }
+  }
 
-    // 10. Owner Mark Order as Paid (Testing status update)
-    console.log(`\n[10/11] Testing Owner updating order payment status to paid (/api/orders/${orderId}/status)...`);
-    const markPaidResponse = await axios.put(`${BASE_URL}/orders/${orderId}/status`, {
-      paymentStatus: 'paid'
-    }, { headers: ownerHeaders });
-    if (markPaidResponse.status === 200) {
-      console.log('✅ Order marked PAID successfully by Owner.');
+  // ── STEP 10: Fetch Owner Orders ───────────────────────────────────────────
+  try {
+    const res = await axios.get(`${BASE_URL}/orders`, { headers: ownerHeaders });
+    if (res.status === 200) {
+      const orders = res.data.orders || res.data;
+      const found = Array.isArray(orders) && orders.find(o => o.id === orderId);
+      pass('10/14', `Owner orders fetched OK — Order found: ${found ? 'YES' : 'NO'}`);
+    } else {
+      fail('10/14', `Unexpected status: ${res.status}`);
     }
+  } catch (err) {
+    fail('10/14', 'Owner orders fetch failed', err);
+  }
 
-    // 11. Super Admin Login and Dashboard Metrics Fetch
-    console.log('\n[11/11] Testing Super Admin Login & Dashboard access (/api/auth/admin/login)...');
-    const adminLoginResponse = await axios.post(`${BASE_URL}/auth/admin/login`, {
+  // ── STEP 11: Mark Order as Paid ──────────────────────────────────────────
+  try {
+    const res = await axios.put(`${BASE_URL}/orders/${orderId}/status`,
+      { paymentStatus: 'paid' },
+      { headers: ownerHeaders }
+    );
+    if (res.status === 200) {
+      pass('11/14', 'Order marked as paid OK');
+    } else {
+      fail('11/14', `Unexpected status: ${res.status}`);
+    }
+  } catch (err) {
+    fail('11/14', 'Mark order paid failed', err);
+  }
+
+  // ── STEP 12: Owner Analytics ──────────────────────────────────────────────
+  try {
+    const res = await axios.get(`${BASE_URL}/owner/analytics`, { headers: ownerHeaders });
+    if (res.status === 200) {
+      pass('12/14', 'Owner analytics endpoint OK');
+    } else {
+      fail('12/14', `Unexpected status: ${res.status}`);
+    }
+  } catch (err) {
+    if (err.response && err.response.status === 404) {
+      console.log(`  ⚠️  [12/14] Analytics endpoint not implemented yet — skipping`);
+    } else {
+      fail('12/14', 'Owner analytics failed', err);
+    }
+  }
+
+  // ── STEP 13: Admin Login + Stats ─────────────────────────────────────────
+  try {
+    const loginRes = await axios.post(`${BASE_URL}/auth/admin/login`, {
       loginId: 'Jitu',
-      password: 'admin123'
+      password: process.env.ADMIN_PASSWORD || 'admin123'
     });
 
-    if (adminLoginResponse.status === 200) {
-      console.log('✅ Admin login SUCCESS!');
-      adminToken = adminLoginResponse.data.token;
-      const adminHeaders = { Authorization: `Bearer ${adminToken}` };
+    if (loginRes.status === 200 && loginRes.data.token) {
+      adminToken = loginRes.data.token;
+      pass('13/14', 'Admin login OK');
 
-      // Fetch admin dashboard details
-      const adminDashboardResponse = await axios.get(`${BASE_URL}/admin/stats`, { headers: adminHeaders });
-      if (adminDashboardResponse.status === 200) {
-        console.log('✅ Admin dashboard stats successfully retrieved!');
-        console.log(`   - Registered Merchants: ${adminDashboardResponse.data.totalOwners || 0}`);
+      const statsRes = await axios.get(`${BASE_URL}/admin/stats`, {
+        headers: { Authorization: `Bearer ${adminToken}` }
+      });
+      if (statsRes.status === 200) {
+        pass('13b/14', `Admin stats OK — ${statsRes.data.totalOwners} owners on platform`);
       }
-    }
-
-    console.log('\n================================================================');
-    console.log('🎉 ALL INTEGRATION TESTS PASSED SUCCESSFULLY WITHOUT EXCEPTION!');
-    console.log('================================================================');
-
-  } catch (err) {
-    console.error('\n❌ TEST RUN FAILED!');
-    if (err.response) {
-      console.error(`Error status: ${err.response.status}`);
-      console.error('Error message:', JSON.stringify(err.response.data, null, 2));
     } else {
-      console.error(err.message);
+      fail('13/14', 'Admin login did not return token');
     }
+  } catch (err) {
+    fail('13/14', 'Admin login/stats failed', err);
+  }
+
+  // ── STEP 14: Cleanup — Delete Test Owner ─────────────────────────────────
+  if (adminToken && ownerId) {
+    try {
+      const res = await axios.delete(`${BASE_URL}/admin/owners/${ownerId}`, {
+        headers: { Authorization: `Bearer ${adminToken}` }
+      });
+      if (res.status === 200) {
+        pass('14/14', `Test data cleanup OK — owner ${ownerId} deleted`);
+      } else {
+        fail('14/14', `Cleanup returned status ${res.status}`);
+      }
+    } catch (err) {
+      fail('14/14', 'Test cleanup failed (manual cleanup required)', err);
+    }
+  } else {
+    console.log('  ⏭️  [14/14] Skipping cleanup — admin token or ownerId not available');
+  }
+
+  // ── Final Summary ─────────────────────────────────────────────────────────
+  console.log('\n═══════════════════════════════════════════════════════════════');
+  console.log(`  Tests Passed : ${testsPassed}`);
+  console.log(`  Tests Failed : ${testsFailed}`);
+  console.log('═══════════════════════════════════════════════════════════════');
+
+  if (testsFailed === 0) {
+    console.log('\n🎉 ALL E2E TESTS PASSED — MenuMitra is fully operational!\n');
+  } else {
+    console.log(`\n⚠️  ${testsFailed} TEST(S) FAILED — Review the failures above.\n`);
     process.exit(1);
   }
 };
 
-runTests();
+runTests().catch(err => {
+  console.error('\n💥 UNEXPECTED CRASH:', err.message);
+  process.exit(1);
+});

@@ -51,45 +51,46 @@ export default function Subscription() {
     calculateDays();
   }, [user?.subscriptionExpires]);
 
+  // ── Razorpay Payment Page (₹100/month subscription) ─────────────────────
+  const RAZORPAY_SUBSCRIPTION_PAGE =
+    process.env.REACT_APP_RAZORPAY_SUBSCRIPTION_PAGE ||
+    'https://pages.razorpay.com/pl_SvCPlnDwmb2zKY/view';
+
   const handleRenew = async () => {
     try {
       setLoading(true);
-      toast.success("💳 Initiating Razorpay Subscription Renewal...");
-      
-      // Hit billing renewal checkout route (simulated or real)
-      const res = await api.post('/subscription/checkout', {
-        planId: "standard" 
-      });
+      toast('💳 Opening Razorpay payment page…', { icon: '🔄' });
 
-      if (res.data && res.data.success) {
-        toast.success("✅ Subscription successfully extended by 30 days!");
-        // Update fresh local profile expiry!
-        const newExpiry = new Date();
-        const currentExpiry = user?.subscriptionExpires ? new Date(user.subscriptionExpires) : new Date();
-        const baseDate = currentExpiry > newExpiry ? currentExpiry : newExpiry;
-        baseDate.setDate(baseDate.getDate() + 30);
-        
-        updateProfileState({
-          ...user,
-          subscriptionStatus: 'active',
-          subscriptionExpires: baseDate.toISOString()
-        });
+      // Open the Razorpay payment page in a new tab
+      window.open(RAZORPAY_SUBSCRIPTION_PAGE, '_blank', 'noopener,noreferrer');
+
+      toast.success('✅ Complete payment on the Razorpay page. Your plan will be activated within minutes!', { duration: 6000 });
+
+      // Attempt to record renewal intent via API (non-blocking)
+      try {
+        const res = await api.post('/subscription/checkout', { planId: 'standard' });
+        if (res.data && res.data.success) {
+          const newExpiry = new Date();
+          const currentExpiry = user?.subscriptionExpires ? new Date(user.subscriptionExpires) : new Date();
+          const baseDate = currentExpiry > newExpiry ? currentExpiry : newExpiry;
+          baseDate.setDate(baseDate.getDate() + 30);
+          updateProfileState({
+            ...user,
+            subscriptionStatus: 'active',
+            subscriptionExpires: baseDate.toISOString()
+          });
+        }
+      } catch (_) {
+        // Non-critical — payment happens on Razorpay page, admin will confirm
       }
     } catch (e) {
       console.error(e);
-      // Fallback checkout simulation if Razorpay webhook keys aren't set up yet
-      toast.success("🎮 Gateway sandbox mode active! Extending trial by 30 days...");
-      const baseDate = user?.subscriptionExpires ? new Date(user.subscriptionExpires) : new Date();
-      baseDate.setDate(baseDate.getDate() + 30);
-      updateProfileState({
-        ...user,
-        subscriptionStatus: 'active',
-        subscriptionExpires: baseDate.toISOString()
-      });
+      toast.error('Failed to open payment page. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
 
   const isActive = user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'trial';
 

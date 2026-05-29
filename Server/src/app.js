@@ -161,14 +161,17 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start Server
+// Start Server — skip in test mode (Supertest creates its own server binding)
 const PORT = process.env.PORT || 4000;
-server.listen(PORT, () => {
-  console.log(`===============================================`);
-  console.log(`MenuMitra Server listening on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV}`);
-  console.log(`Developer: Abhijit Kumar Misra`);
-  console.log(`===============================================`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  server.listen(PORT, () => {
+    console.log(`===============================================`);
+    console.log(`MenuMitra Server listening on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log(`Developer: Abhijit Kumar Misra`);
+    console.log(`===============================================`);
+  });
+}
 
 module.exports = { app, server };
+
